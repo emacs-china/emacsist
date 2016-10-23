@@ -5,4 +5,4 @@ emacs公众号文章
 [[./images/qrcode.jpg]]
 
 ** 维护人
-hick king aborn geekplus
+[[https://github.com/hick][hick]] king [[https://github.com/aborn][aborn]] [[https://github.com/geekplux][geekplux]]
