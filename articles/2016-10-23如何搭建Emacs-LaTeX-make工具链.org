@@ -1,27 +1,31 @@
-* 如何搭建 Emacs-LaTeX-make 工具链
+#+TITLE: 如何搭建Emacs-LaTeX-make工具链
+#+AUTHOR: Da Zhang
+#+TAGS: latex,make
+#+DATE: [2016-10-25 二 19:47]
+#+LANGUAGE:  zh-CN#+OPTIONS:  H:6 num:nil toc:t \n:nil ::t |:t ^:nil -:nil f:t *:t <:nil
 
-** 背景
+* 背景
 在Emacs中生活惯了的人，比如我，慢慢会形成什么文本编辑都要在Emacs中进行的习惯和需求。如果有什么文本编辑非得到其他编辑器里面干，就会心里痒痒浑身不舒服。这估计也是一种病吧。 LaTeX 也是如此。特别是，在Emacs中还有 AucTeX 这样的神器，就更有理由把这个工具链搭配好，来享受行云流水般的工作快感和“心流”。
 注：关于 AucTeX 的强大功能，参见其示例网页 https://www.gnu.org/software/auctex/screenshots.html
 
-** 为什么要用 make 类工具
+* 为什么要用 make 类工具
 熟悉 LaTeX 工作流程的同学可能知道，如果 LaTeX 里面没有引用参考文献，那么编译起来可谓一泻千里。如果你开始用 bibtex 并不断往 tex 文件里 添加引用参考文献（~~学术狗的日常！），那么你经常性的要反复交替运行 latex （或 pdflatex）和 bibtex 以解决 aux、bbl、tex 等文件的互相依赖问题。有些情况下，这个过程可以达到令人发指的十几遍。 这个时候，make 工具的威力就显现出来了：如同对有些计算机语言程序的编译和链接过程，make 工具可以递归地、一遍遍自动调用 latex 和 bibtex，直到输出文件最终稳定。
 
-** 一个用于 Emacs-LaTeX 工作流的 makefile 脚本的例子
+* 一个用于 Emacs-LaTeX 工作流的 makefile 脚本的例子
 注意以下几个要点
-**** LATEXOPTIONS = -src-specials -interaction=nonstopmode
+*** LATEXOPTIONS = -src-specials -interaction=nonstopmode
 1. -src-specials 使 TeX 在输出的 DVI 文件中添加关于如何跳转回 tex 文件对应位置的位置信息。
 2. -interaction=nonstopmode 使 latex 一路快速运行到底，而不是停下来问这问那。
-**** PDFVIEWER = sumatrapdf -reuse-instance -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\""
+*** PDFVIEWER = sumatrapdf -reuse-instance -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\""
 1. 我这里采用了 Windows 下的 sumatrapdf， 因为此软件不会锁死打开的pdf文件。如果用 Adobe，pdf文件会被锁定 – 每次都要关上 pdf 再开始编译。
 2. 注意：要把 sumatrapdf 放在 Windows PATH 中，否则 make 程序不能调用它。
 3. sumatrapdf 的运行参数 -reuse-instance 使其可以在同一个打开的窗口中多次自动打开更新过的pdf文件。
 4. sumatrapdf 的运行参数 -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\"" 使其知道调用 emacsclient 来访问 tex 源文件。
-**** BIBOPTIONS = -include-directory=$(BIBDIR) 及 vpath
+*** BIBOPTIONS = -include-directory=$(BIBDIR) 及 vpath
 1. 使得 BIBDIR 里面的 bib 文件都可以被自动访问。这个例子里的－－ 在这里的 BIBDIR 是 "C:/H/Bib"。
 2. vpath %.bib /cygdrive/c/H/Bib 使 make 程序知道在此路径中搜索 bib 文件。
-**** 如果需要 pdf 文件也具备逆向搜索功能, 即，通过点击 pdf 文件中的字段访问 tex 文件中的字段 （如同在 DVI 文件里一样）， 你需要在 tex 文件头部加入 /usepackage{pdfsync}
-**** REBUILDABLES 里列出了可以被自动清除的文件的扩展名 －－ 运行 make clean 把它们都清理掉。
+*** 如果需要 pdf 文件也具备逆向搜索功能, 即，通过点击 pdf 文件中的字段访问 tex 文件中的字段 （如同在 DVI 文件里一样）， 你需要在 tex 文件头部加入 /usepackage{pdfsync}
+*** REBUILDABLES 里列出了可以被自动清除的文件的扩展名 －－ 运行 make clean 把它们都清理掉。
 
 #+NAME: makefile 脚本具体内容
 #+BEGIN_SRC makefile
@@ -73,7 +77,7 @@ clean :
     rm -f $(REBUILDABLES)
 #+END_SRC
 
-** 原生工具latexmk
+* 原生工具latexmk
 如果不用 make 和 makefile， 我们还可以使用 latex 系统原生的工具 latexmk
 1. latexmk 是 latex 系统自带的一个 Perl 语言脚本，其功能和 make 相似，但是好处是你不用编写自己的 makefile 脚本了。
 2. 先调调胃口，给出几个外部参考文献：
