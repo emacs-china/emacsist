@@ -1,8 +1,9 @@
 #+TITLE: 如何搭建Emacs-LaTeX-make工具链
 #+AUTHOR: Da Zhang
 #+TAGS: latex,make
-#+DATE: [2016-10-25 二 19:47]
-#+LANGUAGE:  zh-CN#+OPTIONS:  H:6 num:nil toc:t \n:nil ::t |:t ^:nil -:nil f:t *:t <:nil
+#+DATE: [2016-10-23]
+#+LANGUAGE:  zh-CN
+#+OPTIONS:  H:6 num:nil toc:t \n:nil ::t |:t ^:nil -:nil f:t *:t <:nil
 
 * 背景
 在Emacs中生活惯了的人，比如我，慢慢会形成什么文本编辑都要在Emacs中进行的习惯和需求。如果有什么文本编辑非得到其他编辑器里面干，就会心里痒痒浑身不舒服。这估计也是一种病吧。 LaTeX 也是如此。特别是，在Emacs中还有 AucTeX 这样的神器，就更有理由把这个工具链搭配好，来享受行云流水般的工作快感和“心流”。
