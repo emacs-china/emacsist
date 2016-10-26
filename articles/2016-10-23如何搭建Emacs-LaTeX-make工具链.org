@@ -1,0 +1,131 @@
+#+TITLE: 如何搭建Emacs-LaTeX-make工具链
+#+AUTHOR: Da Zhang
+#+TAGS: latex,make
+#+DATE: [2016-10-23]
+#+LANGUAGE:  zh-CN
+#+OPTIONS:  H:6 num:nil toc:t \n:nil ::t |:t ^:nil -:nil f:t *:t <:nil
+
+* 背景
+在Emacs中生活惯了的人，比如我，慢慢会形成什么文本编辑都要在Emacs中进行的习惯和需求。如果有什么文本编辑非得到其他编辑器里面干，就会心里痒痒浑身不舒服。这估计也是一种病吧。 LaTeX 也是如此。特别是，在Emacs中还有 AucTeX 这样的神器，就更有理由把这个工具链搭配好，来享受行云流水般的工作快感和“心流”。
+注：关于 AucTeX 的强大功能，参见其示例网页 https://www.gnu.org/software/auctex/screenshots.html
+
+* 为什么要用 make 类工具
+熟悉 LaTeX 工作流程的同学可能知道，如果 LaTeX 里面没有引用参考文献，那么编译起来可谓一泻千里。如果你开始用 bibtex 并不断往 tex 文件里 添加引用参考文献（~~学术狗的日常！），那么你经常性的要反复交替运行 latex （或 pdflatex）和 bibtex 以解决 aux、bbl、tex 等文件的互相依赖问题。有些情况下，这个过程可以达到令人发指的十几遍。 这个时候，make 工具的威力就显现出来了：如同对有些计算机语言程序的编译和链接过程，make 工具可以递归地、一遍遍自动调用 latex 和 bibtex，直到输出文件最终稳定。
+
+* 一个用于 Emacs-LaTeX 工作流的 makefile 脚本的例子
+注意以下几个要点
+*** LATEXOPTIONS = -src-specials -interaction=nonstopmode
+1. -src-specials 使 TeX 在输出的 DVI 文件中添加关于如何跳转回 tex 文件对应位置的位置信息。
+2. -interaction=nonstopmode 使 latex 一路快速运行到底，而不是停下来问这问那。
+*** PDFVIEWER = sumatrapdf -reuse-instance -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\""
+1. 我这里采用了 Windows 下的 sumatrapdf， 因为此软件不会锁死打开的pdf文件。如果用 Adobe，pdf文件会被锁定 – 每次都要关上 pdf 再开始编译。
+2. 注意：要把 sumatrapdf 放在 Windows PATH 中，否则 make 程序不能调用它。
+3. sumatrapdf 的运行参数 -reuse-instance 使其可以在同一个打开的窗口中多次自动打开更新过的pdf文件。
+4. sumatrapdf 的运行参数 -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\"" 使其知道调用 emacsclient 来访问 tex 源文件。
+*** BIBOPTIONS = -include-directory=$(BIBDIR) 及 vpath
+1. 使得 BIBDIR 里面的 bib 文件都可以被自动访问。这个例子里的－－ 在这里的 BIBDIR 是 "C:/H/Bib"。
+2. vpath %.bib /cygdrive/c/H/Bib 使 make 程序知道在此路径中搜索 bib 文件。
+*** 如果需要 pdf 文件也具备逆向搜索功能, 即，通过点击 pdf 文件中的字段访问 tex 文件中的字段 （如同在 DVI 文件里一样）， 你需要在 tex 文件头部加入 /usepackage{pdfsync}
+*** REBUILDABLES 里列出了可以被自动清除的文件的扩展名 －－ 运行 make clean 把它们都清理掉。
+
+#+NAME: makefile 脚本具体内容
+#+BEGIN_SRC makefile
+MAIN=maintex
+
+EPS=img/*.eps
+
+TEX=tomo_spectra.tex
+
+BIB=da.bib
+
+REBUILDABLES =  \
+*.log   \
+*.blg   \
+*.bbl   \
+*.aux   \
+*.lof   \
+*.lot   \
+
+LATEXOPTIONS = -src-specials -interaction=nonstopmode
+
+PDFVIEWER = sumatrapdf -reuse-instance -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\""
+
+BIBDIR = "C:/H/Bib"
+
+BIBOPTIONS = -include-directory=$(BIBDIR)
+
+vpath %.bib /cygdrive/c/H/Bib
+
+viewpdf : $(MAIN).pdf
+    $(PDFVIEWER) $(MAIN).pdf &
+
+dvi : $(MAIN).dvi
+    yap -1  $(MAIN).dvi
+
+$(MAIN).pdf : $(MAIN).dvi
+    pdfclosem $(MAIN).pdf ; dvipdfm $(MAIN).dvi
+
+$(MAIN).dvi : $(MAIN).bbl $(EPS)
+    latex $(LATEXOPTIONS) $(MAIN)
+        if ( grep 'Rerun' $(MAIN).log > /dev/null ) ; then\
+            latex $(LATEXOPTIONS) $(MAIN) ; \
+        else :; fi
+
+$(MAIN).bbl : $(TEX)
+    rm -f $(MAIN).aux *.bbl; latex $(LATEXOPTIONS) $(MAIN); bibtex $(BIBOPTIONS) $(MAIN)
+
+clean :
+    rm -f $(REBUILDABLES)
+#+END_SRC
+
+* 原生工具latexmk
+如果不用 make 和 makefile， 我们还可以使用 latex 系统原生的工具 latexmk
+1. latexmk 是 latex 系统自带的一个 Perl 语言脚本，其功能和 make 相似，但是好处是你不用编写自己的 makefile 脚本了。
+2. 先调调胃口，给出几个外部参考文献：
+关于工作流程
+http://emacsist.com/10707
+http://pragmaticemacs.com/emacs/speed-up-pdf-export-from-org-mode-with-latexmk/
+https://zhangda.wordpress.com/how-to-achieve-auto-compilation-for-the-org-latex-pdf-publishing-chain/ （鄙人拙作）
+关于 latexmk 配置
+http://jon.smajda.com/2008/03/08/latexmk/
+3. latexmk 这么好用， 那么它在哪里？ 应该在 latex 系统里自带了。
+试用下面命令查看它的路径在哪里:
+
+#+BEGIN_SRC shell-script
+which latexmk
+latexmk is /cygdrive/c/CTEX/MiKTeX/miktex/bin/latexmk
+#+END_SRC
+
+查看 latexmk 是否正常运行：
+
+#+BEGIN_SRC shell-script
+latexmk -v
+Latexmk, John Collins, 5 February 2015. Version 4.43a
+#+END_SRC
+
+4. 工作流
+在 tex 文件所在目录打开 shell，运行如下命令，latexmk 会自动检查 tex 文件的更新情况，并自动编译成 pdf 文件。
+latexmk -pvc -pdf -view=none paper.tex
+注意，在上面例子中，命令里指明了 paper.tex 是目标文件。如果没有指明，latexmk 会自动寻找当前目录中的 tex 文件并运行。
+如果多个 tex 文件共存于当前目录，则需指明目标 tex 文件，否则会引起混淆。
+
+用下面的 samatrapdf 命令调用实现 pdf 文件的自动预览 （自动检测本地 pdf 文件变化并自动更新显示）。
+sumatrapdf -reuse-instance paper.pdf
+
+5. 一些更舒服（懒惰）的配置：
+用 shell aliases 来省去敲各种命令参数：
+# for viewing pdf but not locking the file
+alias pdfview='sumatrapdf -reuse-instance'
+
+# for easily use latexmk
+alias mklatex='latexmk -pvc -pdf'
+# -f for non stop
+alias mktex='latexmk -f -pvc -pdf -view=pdf'
+我的 latexmk 的设置：
+$pdf_previewer = 'sumatrapdf -reuse-instance %O %S';
+$clean_ext = 'paux lox pdfsync out';
+注意：
+.latexmkrc 的默认路径是 $HOME directory
+.latexmkrc 的语法是 Perl 语言
+我在此文件中设定了 sumatrapdf 作为默认 pdf viewer
+我在此文件中设定了 paux lox pdfsync out 等需要被自动清理的文件类型。
