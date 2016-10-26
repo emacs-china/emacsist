@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>2016-10-23如何搭建Emacs-LaTeX-make工具链 - Emacs公众号文章</title>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+  <meta name="author" content="lujun9972" />
+  <style>
+   #ds-thread #ds-reset .ds-comment-body p {color: #ffffff;}
+   #ds-thread #ds-reset .ds-comment-body p a {color: #ff0;}
+   #ds-thread #ds-reset .ds-comment-body p a:hover {color: #0ff;}
+   #disqus_thread a {color: #00ffff;}
+  </style>
+  <link rel="stylesheet" href="http://emacs-china.github.io/emacsist/media/css/main.css" type="text/css"/>
+  <link rel="stylesheet" href="http://emacs-china.github.io/emacsist/media/css/comment.css" type="text/css"/>
+</head>
+
+  <body><div class="container">
+<div>
+  <header class="masthead">
+    <h1 class="masthead-title"><a href="http://emacs-china.github.io/emacsist/">Emacs公众号文章</a></h1>
+    <p>=============&gt;欢迎来稿</p>
+    <nav class="site-nav">
+      <div class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z" fill="#ffff00"/>
+          <path d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z" fill="#ffff00"/>
+          <path d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z" fill="#ffff00"/>
+        </svg>
+      </div>
+      <ul class="trigger">
+        <li><a href="http://emacs-china.github.io/emacsist/years/">Years</a></li>
+        <li><a href="http://emacs-china.github.io/emacsist/authors/">Authors</a></li>
+        <li><a href="http://emacs-china.github.io/emacsist/tags/">Tags</a></li>
+        <li><a href="http://emacs-china.github.io/emacsist/about/">About</a></li>
+        <li><a href="https://github.com/lujun9972/emacs-document">Github</a></li>
+        <li><a href="http://emacs-china.github.io/emacsist/rss.xml">RSS</a></li>
+      </ul>
+    </nav>
+    <form method="get" id="searchform" action="http://www.google.com/search">
+      <input type="text" class="field" name="q" id="s" placeholder="Search">
+      <input type="hidden" name="as_sitesearch" value="emacs-china.github.io/emacsist">
+    </form>
+  </header>
+</div>
+
+<div>
+<div class="post">
+<h1 class="title">2016-10-23如何搭建Emacs-LaTeX-make工具链</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgheadline10">1. 如何搭建 Emacs-LaTeX-make 工具链</a>
+<ul>
+<li><a href="#orgheadline1">1.1. 背景</a></li>
+<li><a href="#orgheadline2">1.2. 为什么要用 make 类工具</a></li>
+<li><a href="#orgheadline8">1.3. 一个用于 Emacs-LaTeX 工作流的 makefile 脚本的例子</a>
+<ul>
+<li>
+<ul>
+<li><a href="#orgheadline3">1.3.0.1. LATEXOPTIONS = -src-specials -interaction=nonstopmode</a></li>
+<li><a href="#orgheadline4">1.3.0.2. PDFVIEWER = sumatrapdf -reuse-instance -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\""</a></li>
+<li><a href="#orgheadline5">1.3.0.3. BIBOPTIONS = -include-directory=$(BIBDIR) 及 vpath</a></li>
+<li><a href="#orgheadline6">1.3.0.4. 如果需要 pdf 文件也具备逆向搜索功能, 即，通过点击 pdf 文件中的字段访问 tex 文件中的字段 （如同在 DVI 文件里一样）， 你需要在 tex 文件头部加入 /usepackage{pdfsync}</a></li>
+<li><a href="#orgheadline7">1.3.0.5. REBUILDABLES 里列出了可以被自动清除的文件的扩展名 －－ 运行 make clean 把它们都清理掉。</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgheadline9">1.4. 原生工具latexmk</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgheadline10" class="outline-2">
+<h2 id="orgheadline10"><span class="section-number-2">1</span> 如何搭建 Emacs-LaTeX-make 工具链</h2>
+<div class="outline-text-2" id="text-1">
+</div><div id="outline-container-orgheadline1" class="outline-3">
+<h3 id="orgheadline1"><span class="section-number-3">1.1</span> 背景</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+在Emacs中生活惯了的人，比如我，慢慢会形成什么文本编辑都要在Emacs中进行的习惯和需求。如果有什么文本编辑非得到其他编辑器里面干，就会心里痒痒浑身不舒服。这估计也是一种病吧。 LaTeX 也是如此。特别是，在Emacs中还有 AucTeX 这样的神器，就更有理由把这个工具链搭配好，来享受行云流水般的工作快感和“心流”。
+注：关于 AucTeX 的强大功能，参见其示例网页 <a href="https://www.gnu.org/software/auctex/screenshots.html">https://www.gnu.org/software/auctex/screenshots.html</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline2" class="outline-3">
+<h3 id="orgheadline2"><span class="section-number-3">1.2</span> 为什么要用 make 类工具</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+熟悉 LaTeX 工作流程的同学可能知道，如果 LaTeX 里面没有引用参考文献，那么编译起来可谓一泻千里。如果你开始用 bibtex 并不断往 tex 文件里 添加引用参考文献（~~学术狗的日常！），那么你经常性的要反复交替运行 latex （或 pdflatex）和 bibtex 以解决 aux、bbl、tex 等文件的互相依赖问题。有些情况下，这个过程可以达到令人发指的十几遍。 这个时候，make 工具的威力就显现出来了：如同对有些计算机语言程序的编译和链接过程，make 工具可以递归地、一遍遍自动调用 latex 和 bibtex，直到输出文件最终稳定。
+</p>
+</div>
+</div>
+
+<div id="outline-container-orgheadline8" class="outline-3">
+<h3 id="orgheadline8"><span class="section-number-3">1.3</span> 一个用于 Emacs-LaTeX 工作流的 makefile 脚本的例子</h3>
+<div class="outline-text-3" id="text-1-3">
+<p>
+注意以下几个要点
+</p>
+</div>
+<div id="outline-container-orgheadline3" class="outline-5">
+<h5 id="orgheadline3"><span class="section-number-5">1.3.0.1</span> LATEXOPTIONS = -src-specials -interaction=nonstopmode</h5>
+<div class="outline-text-5" id="text-1-3-0-1">
+<ol class="org-ol">
+<li>-src-specials 使 TeX 在输出的 DVI 文件中添加关于如何跳转回 tex 文件对应位置的位置信息。</li>
+<li>-interaction=nonstopmode 使 latex 一路快速运行到底，而不是停下来问这问那。</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgheadline4" class="outline-5">
+<h5 id="orgheadline4"><span class="section-number-5">1.3.0.2</span> PDFVIEWER = sumatrapdf -reuse-instance -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\""</h5>
+<div class="outline-text-5" id="text-1-3-0-2">
+<ol class="org-ol">
+<li>我这里采用了 Windows 下的 sumatrapdf， 因为此软件不会锁死打开的pdf文件。如果用 Adobe，pdf文件会被锁定 – 每次都要关上 pdf 再开始编译。</li>
+<li>注意：要把 sumatrapdf 放在 Windows PATH 中，否则 make 程序不能调用它。</li>
+<li>sumatrapdf 的运行参数 -reuse-instance 使其可以在同一个打开的窗口中多次自动打开更新过的pdf文件。</li>
+<li>sumatrapdf 的运行参数 -inverse-search "c:\emacs\bin\emacsclientw.exe +%l \"%f\"" 使其知道调用 emacsclient 来访问 tex 源文件。</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgheadline5" class="outline-5">
+<h5 id="orgheadline5"><span class="section-number-5">1.3.0.3</span> BIBOPTIONS = -include-directory=$(BIBDIR) 及 vpath</h5>
+<div class="outline-text-5" id="text-1-3-0-3">
+<ol class="org-ol">
+<li>使得 BIBDIR 里面的 bib 文件都可以被自动访问。这个例子里的－－ 在这里的 BIBDIR 是 "C:/H/Bib"。</li>
+<li>vpath %.bib /cygdrive/c/H/Bib 使 make 程序知道在此路径中搜索 bib 文件。</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgheadline6" class="outline-5">
+<h5 id="orgheadline6"><span class="section-number-5">1.3.0.4</span> 如果需要 pdf 文件也具备逆向搜索功能, 即，通过点击 pdf 文件中的字段访问 tex 文件中的字段 （如同在 DVI 文件里一样）， 你需要在 tex 文件头部加入 /usepackage{pdfsync}</h5>
+</div>
+<div id="outline-container-orgheadline7" class="outline-5">
+<h5 id="orgheadline7"><span class="section-number-5">1.3.0.5</span> REBUILDABLES 里列出了可以被自动清除的文件的扩展名 －－ 运行 make clean 把它们都清理掉。</h5>
+<div class="outline-text-5" id="text-1-3-0-5">
+<div class="org-src-container">
+
+<pre class="src src-makefile" id="orgsrcblock1"><span style="color: #7590db;">MAIN</span>=maintex
+
+<span style="color: #7590db;">EPS</span>=img/*.eps
+
+<span style="color: #7590db;">TEX</span>=tomo_spectra.tex
+
+<span style="color: #7590db;">BIB</span>=da.bib
+
+<span style="color: #7590db;">REBUILDABLES</span> =  \
+*.log   \
+*.blg   \
+*.bbl   \
+*.aux   \
+*.lof   \
+*.lot   \
+
+<span style="color: #7590db;">LATEXOPTIONS</span> = -src-specials -interaction=nonstopmode
+
+<span style="color: #7590db;">PDFVIEWER</span> = sumatrapdf -reuse-instance -inverse-search <span style="color: #2d9574;">"c:\emacs\bin\emacsclientw.exe +%l \"%f\""</span>
+
+<span style="color: #7590db;">BIBDIR</span> = <span style="color: #2d9574;">"C:/H/Bib"</span>
+
+<span style="color: #7590db;">BIBOPTIONS</span> = -include-directory=$<span style="color: #4f97d7;">(</span><span style="color: #7590db;">BIBDIR</span><span style="color: #4f97d7;">)</span>
+
+vpath %.bib /cygdrive/c/H/Bib
+
+<span style="color: #bc6ec5; font-weight: bold;">viewpdf</span> : $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.pdf
+    $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">PDFVIEWER</span><span style="color: #4f97d7;">)</span> $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.pdf &amp;
+
+<span style="color: #bc6ec5; font-weight: bold;">dvi</span> : $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.dvi
+    yap -1  $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.dvi
+
+<span style="color: #bc6ec5; font-weight: bold;">$</span><span style="color: #4f97d7; font-weight: bold;">(</span><span style="color: #bc6ec5; font-weight: bold;">MAIN</span><span style="color: #4f97d7; font-weight: bold;">)</span><span style="color: #bc6ec5; font-weight: bold;">.pdf</span> : $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.dvi
+    pdfclosem $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.pdf ; dvipdfm $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.dvi
+
+<span style="color: #bc6ec5; font-weight: bold;">$</span><span style="color: #4f97d7; font-weight: bold;">(</span><span style="color: #bc6ec5; font-weight: bold;">MAIN</span><span style="color: #4f97d7; font-weight: bold;">)</span><span style="color: #bc6ec5; font-weight: bold;">.dvi</span> : $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.bbl $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">EPS</span><span style="color: #4f97d7;">)</span>
+    latex $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">LATEXOPTIONS</span><span style="color: #4f97d7;">)</span> $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>
+        if <span style="color: #4f97d7;">(</span> grep <span style="color: #2d9574;">'Rerun'</span> $<span style="color: #bc6ec5;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #bc6ec5;">)</span>.log &gt; /dev/null <span style="color: #4f97d7;">)</span> ; then\
+            latex $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">LATEXOPTIONS</span><span style="color: #4f97d7;">)</span> $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span> ; \
+        else :; fi
+
+<span style="color: #bc6ec5; font-weight: bold;">$</span><span style="color: #4f97d7; font-weight: bold;">(</span><span style="color: #bc6ec5; font-weight: bold;">MAIN</span><span style="color: #4f97d7; font-weight: bold;">)</span><span style="color: #bc6ec5; font-weight: bold;">.bbl</span> : $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">TEX</span><span style="color: #4f97d7;">)</span>
+    rm -f $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>.aux *.bbl; latex $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">LATEXOPTIONS</span><span style="color: #4f97d7;">)</span> $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>; bibtex $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">BIBOPTIONS</span><span style="color: #4f97d7;">)</span> $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">MAIN</span><span style="color: #4f97d7;">)</span>
+
+<span style="color: #bc6ec5; font-weight: bold;">clean</span> :
+    rm -f $<span style="color: #4f97d7;">(</span><span style="color: #7590db;">REBUILDABLES</span><span style="color: #4f97d7;">)</span>
+</pre>
+</div>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgheadline9" class="outline-3">
+<h3 id="orgheadline9"><span class="section-number-3">1.4</span> 原生工具latexmk</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+如果不用 make 和 makefile， 我们还可以使用 latex 系统原生的工具 latexmk
+</p>
+<ol class="org-ol">
+<li>latexmk 是 latex 系统自带的一个 Perl 语言脚本，其功能和 make 相似，但是好处是你不用编写自己的 makefile 脚本了。</li>
+<li>先调调胃口，给出几个外部参考文献：</li>
+</ol>
+<p>
+关于工作流程
+<a href="http://emacsist.com/10707">http://emacsist.com/10707</a>
+<a href="http://pragmaticemacs.com/emacs/speed-up-pdf-export-from-org-mode-with-latexmk/">http://pragmaticemacs.com/emacs/speed-up-pdf-export-from-org-mode-with-latexmk/</a>
+<a href="https://zhangda.wordpress.com/how-to-achieve-auto-compilation-for-the-org-latex-pdf-publishing-chain/">https://zhangda.wordpress.com/how-to-achieve-auto-compilation-for-the-org-latex-pdf-publishing-chain/</a> （鄙人拙作）
+关于 latexmk 配置
+<a href="http://jon.smajda.com/2008/03/08/latexmk/">http://jon.smajda.com/2008/03/08/latexmk/</a>
+</p>
+<ol class="org-ol">
+<li>latexmk 这么好用， 那么它在哪里？ 应该在 latex 系统里自带了。</li>
+</ol>
+<p>
+试用下面命令查看它的路径在哪里:
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-shell-script">which latexmk
+latexmk is /cygdrive/c/CTEX/MiKTeX/miktex/bin/latexmk
+</pre>
+</div>
+
+<p>
+查看 latexmk 是否正常运行：
+</p>
+
+<div class="org-src-container">
+
+<pre class="src src-shell-script">latexmk -v
+Latexmk, John Collins, <span style="color: #a45bad;">5</span> February <span style="color: #a45bad;">2015.</span> Version <span style="color: #a45bad;">4.43a</span>
+</pre>
+</div>
+
+<ol class="org-ol">
+<li>工作流</li>
+</ol>
+<p>
+在 tex 文件所在目录打开 shell，运行如下命令，latexmk 会自动检查 tex 文件的更新情况，并自动编译成 pdf 文件。
+latexmk -pvc -pdf -view=none paper.tex
+注意，在上面例子中，命令里指明了 paper.tex 是目标文件。如果没有指明，latexmk 会自动寻找当前目录中的 tex 文件并运行。
+如果多个 tex 文件共存于当前目录，则需指明目标 tex 文件，否则会引起混淆。
+</p>
+
+<p>
+用下面的 samatrapdf 命令调用实现 pdf 文件的自动预览 （自动检测本地 pdf 文件变化并自动更新显示）。
+sumatrapdf -reuse-instance paper.pdf
+</p>
+
+<ol class="org-ol">
+<li>一些更舒服（懒惰）的配置：</li>
+</ol>
+<p>
+用 shell aliases 来省去敲各种命令参数：
+</p>
+
+<p>
+alias pdfview='sumatrapdf -reuse-instance'
+</p>
+
+<p>
+alias mklatex='latexmk -pvc -pdf'
+</p>
+
+<p>
+alias mktex='latexmk -f -pvc -pdf -view=pdf'
+我的 latexmk 的设置：
+$pdf_previewer = 'sumatrapdf -reuse-instance %O %S';
+$clean_ext = 'paux lox pdfsync out';
+注意：
+.latexmkrc 的默认路径是 $HOME directory
+.latexmkrc 的语法是 Perl 语言
+我在此文件中设定了 sumatrapdf 作为默认 pdf viewer
+我在此文件中设定了 paux lox pdfsync out 等需要被自动清理的文件类型。
+</p>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+<div>
+        <div class="post-meta">
+            <span title="post date" class="post-info">2016-10-26</span>
+            <span title="last modification date" class="post-info">2016-10-24</span>
+            <span title="tags" class="post-info">:N/A:</span>
+            <span title="author" class="post-info"><a href="mailto:lujun9972 &lt;at&gt; lujun9972-desktop">lujun9972</a></span>
+        </div>
+    <script src="http://emacs-china.github.io/emacsist/media/js/jquery-2.1.3.min.js"></script>
+        <section>
+            <h1>Comments</h1>
+            <div id="comment-wrap">
+                    <a class="disqus_label">使用 Disqus 评论</a>
+                    <a class="ds-label">使用多说评论</a>
+    </ul>
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+         //var disqus_developer = 1;
+         var preempt_signal=false;
+         var disqus_identifier = "/blog/2016/10/26/2016-10-23如何搭建emacs-latex-make工具链/";
+         var disqus_url = "http://emacs-china.github.io/emacsist/blog/2016/10/26/2016-10-23如何搭建emacs-latex-make工具链/";
+         var disqus_shortname = 'emacsist';
+         /* * * DON'T EDIT BELOW THIS LINE * * */
+         (function() {
+             var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+             dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+             (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+             $('#disqus_thread').css('display','none');
+         })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+        <div class="ds-thread"></div>
+        <script type="text/javascript">
+         var duoshuoQuery = {short_name:'emacsist'};
+         (function() {
+             var ds = document.createElement('script');
+             ds.type = 'text/javascript';ds.async = true;
+             ds.src = 'http://static.duoshuo.com/embed.js';
+             ds.charset = 'UTF-8';
+             (document.getElementsByTagName('head')[0]
+           || document.getElementsByTagName('body')[0]).appendChild(ds);
+             $('.ds-thread').css('display','block');
+         })();
+        </script>
+    <script>
+     /* comments */
+     var ego_disqus_thread=$('#disqus_thread');
+     var ego_ds_label=$('.ds-thread');
+     $('.disqus_label').click(function(){
+         ego_disqus_thread.show();
+         ego_ds_label.hide();
+     });
+     $('.ds-label').click(function(){
+         ego_disqus_thread.hide();
+         ego_ds_label.show();
+     });
+    </script>
+        </section>
+    <script src="http://emacs-china.github.io/emacsist/media/js/main.js"></script>
+    <div class="footer">
+        <p>Generated by <a href="http://www.gnu.org/software/emacs/">Emacs</a> 26.x(<a href="http://orgmode.org">Org mode</a> 8.x)</p>
+        <p>
+            Copyright &copy; 2014 - <span id="footerYear"></span> <a href="mailto:lujun9972 &lt;at&gt; lujun9972-desktop">lujun9972</a>
+            &nbsp;&nbsp;-&nbsp;&nbsp;
+            Powered by <a href="https://github.com/emacs-china/ego" target="_blank">EGO</a><br/>
+            <a href="http://creativecommons.org/licenses/by-sa/3.0/" rel="license"><img src="http://i.creativecommons.org/l/by-sa/3.0/88x31.png" style="border-width:0" alt="Creative Commons License" class="center"></a>
+            <script type="text/javascript">document.getElementById("footerYear").innerHTML = (new Date()).getFullYear();</script>
+        </p>
+    </div>
+            </div>
+            <script type="text/javascript"
+                    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_SVG">
+            </script>
+            <script type="text/x-mathjax-config">
+             MathJax.Hub.Config({ TeX: { equationNumbers: {autoNumber: "AMS"} } });
+            </script>
+</div>
+
+  </div></body>
+</html>

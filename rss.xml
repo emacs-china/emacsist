@@ -4,16 +4,16 @@
     <title>Emacs公众号文章</title>
     <link>http://emacs-china.github.io/emacsist</link>
     <description>=============&gt;欢迎来稿</description>
-    <pubDate>二, 25 10月 2016 15:52:15 CST</pubDate>
-    <lastBuildDate>二, 25 10月 2016 15:52:15 CST</lastBuildDate>
+    <pubDate>三, 26 10月 2016 19:56:42 CST</pubDate>
+    <lastBuildDate>三, 26 10月 2016 19:56:42 CST</lastBuildDate>
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>ego static site generator (https://github.com/emacs-china/ego)</generator>
 <item>
 <title>2016-10-23如何搭建Emacs-LaTeX-make工具链</title>
-<link>http://emacs-china.github.io/emacsist/blog/2016/10/25/2016-10-23如何搭建emacs-latex-make工具链/</link>
+<link>http://emacs-china.github.io/emacsist/blog/2016/10/26/2016-10-23如何搭建emacs-latex-make工具链/</link>
 <description>No Description</description>
 <pubDate>2016-10-24</pubDate>
-<guid>http://emacs-china.github.io/emacsist/blog/2016/10/25/2016-10-23如何搭建emacs-latex-make工具链/</guid>
+<guid>http://emacs-china.github.io/emacsist/blog/2016/10/26/2016-10-23如何搭建emacs-latex-make工具链/</guid>
 </item>
 </channel>
 </rss>
