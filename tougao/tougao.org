@@ -11,5 +11,5 @@
 -----
 投稿管理：
 
-* TODO 使用Emacs ediff作为git diff工具
+* TODO 使用Emacs ediff作为git diff工具 投稿时间:2016-10-31
 投稿文章： https://github.com/lujun9972/lujun9972.github.com/blob/source/Emacs%E4%B9%8B%E6%80%92/%E4%BD%BF%E7%94%A8Emacs%20ediff%E4%BD%9C%E4%B8%BAgit%20diff%E5%B7%A5%E5%85%B7.org
