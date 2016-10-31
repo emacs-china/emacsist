@@ -1,13 +1,15 @@
 * Emacsist
-Emacs微信公众号收录文章存档。
+Emacs微信公众号收录文章存档，每周一定期推送一篇文章。
 
 ** 欢迎投稿
 投稿方式有以下两种：
-1. 向该项目提交Pull Request.
-2. 发邮件到投稿邮箱：860202632@qq.com;geekplux@gmail.com;aborn@aborn.me (建议以org文档附件形式投稿)
+1. 向该项目提交Pull Request;
+2. 发邮件到投稿邮箱：860202632@qq.com;geekplux@gmail.com;aborn@aborn.me (建议以org文档附件形式投稿)。
 
 ** 关注公众号
 [[./images/qrcode.jpg]]
 
 ** 维护人
 [[https://github.com/hick][hick]] king [[https://github.com/aborn][aborn]] [[https://github.com/geekplux][geekplux]]
+
+** 往期文章
