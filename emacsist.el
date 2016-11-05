@@ -25,7 +25,7 @@
   (let* ((apath (expand-file-name "articles" emacsist-repo-root)))
     (mapcar
      #'(lambda (item)
-         (format "[[./articles/%s][%s]]  "
+         (format "+ [[./articles/%s][%s]]  "
                  (f-filename item)
                  (f-base item)))
      (f-files apath
