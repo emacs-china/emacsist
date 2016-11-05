@@ -25,7 +25,7 @@
   (let* ((apath (expand-file-name "articles" emacsist-repo-root)))
     (mapcar
      #'(lambda (item)
-         (format "[[./articles/%s][%s]]\n"
+         (format "[[./articles/%s][%s]]  "
                  (f-filename item)
                  (f-base item)))
      (f-files apath
@@ -42,7 +42,8 @@
         (kill-region spos (point-max))
         (insert "\n")
         (mapc #'(lambda (item)
-                  (insert item))
+                  (insert item)
+                  (insert "\n"))
               (emacsist-articles-list-content))
         (save-buffer)
         ))))
