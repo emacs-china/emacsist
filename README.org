@@ -17,6 +17,7 @@ Emacs微信公众号收录文章存档，每周一定期推送一篇文章。往
 #+BEGIN_SRC emacs-lisp
 (load-file "/path/to/emacsist.el")
 (require 'emacsist)
+(setq emacsist-repo-root "/path/to")
 #+END_SRC
 
 执行emacsist.el里的emacsist命令就可以生成往期文章列表。
