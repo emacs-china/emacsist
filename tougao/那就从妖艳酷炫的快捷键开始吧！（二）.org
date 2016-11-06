@@ -1,0 +1,43 @@
+* 首发于
+Ghost in Emacs
+那就从妖艳酷炫的快捷键开始吧！（二）
+* 大家好，第一期我们简单梳理了一下 Emacs 里各种快捷键绑定方式的区别和优先级，并介绍了一种通过悬空代理键的方式避免键冲突的技巧。这一期我们的主题是 Minor-Mode 下的快捷键——掌握了 Minor-Mode 的编写技巧，就代表着你获得了在 Emacs 里随意设置快捷键的最高自由：你不仅可以在原生的 Emacs 下自定义一套类似于 Vim 的 Visual-Mode，还可以在每一个快捷键上重复叠加理论上无限多个命令，将原本局促的键空间拓展至无穷，而且再也不必记忆诸如 "C-c C-x C-a" 这种坑爹的长快捷键了。
+* 如上一期所说，Minor-Mode 下的快捷键具有仅次于 key-translation-map 的优先级，一般情况下它是默认关闭的，当你通过某个命令将其触发之后，其本身自带的快捷键布局便开始生效，给你提供在当前临时的编辑状态下的相关操作接口，例如常见的 isearch-mode cua-rectangle-mark-mode。
+* Minor-Mode 的编写其实非常简单，代码如下
+(define-minor-mode visual-mode
+  :init-value nil
+  ;; :global t
+  :lighter " VM"
+  :keymap (make-sparse-keymap)
+  (if (not visual-mode) (setq cursor-type 'bar)
+    (setq cursor-type 'box)
+    (define-key visual-mode-map (kbd "e") (key-binding (kbd "C-y")))
+    (define-key visual-mode-map (kbd "y") (key-binding (kbd "M-g C-y")))
+    ))
+(define-key visual-mode-map (kbd "h") 'mark-paragraph)
+* 这里我们定义了一个 visual-mode，于此同时系统会再另外生成一个变量、一个命令，名字都叫做 visual-mode。变量代表着当前 visual-mode 是否激活，命令则用于开关。上面代码中的 :init-value 的意思是该变量的初始值，也就是起始状态是开或者关；:global 的意思是该 Minor-Mode 是否全局，默认是局部的（buffer local）；:lighter 是模式开启时在 mode-line 上的提示文字。
+* 这里最重要的是这个 :keymap。按照上面的格式设置后，系统会自动生成一个叫做 visual-mode-map 的变量，然后我们便可以通过 define-key 来设置该 map 下的键绑定了。就是这么简单！
+* 由于 visual-mode 原本就是为了缓解 Ctrl 键压力而设置短键的模式，为了让我在编辑时可以最直观的知道当前 visual-mode 是否激活，这里加入了一个简单的判断逻辑，如果激活的话，则将光标设置为 'box （就是一个方块），退出 Visual-Mode 时光标恢复为 'bar （就是常见的竖线）。
+* 对于具体的键绑定，一般情况下，将大部分键的 define-key 写到 define-minor-mode 之外就好了，这样可以避免每次开关模式时重复设置，如最后一行代码所示。但偶尔也有例外，例如这里的
+(define-key visual-mode-map (kbd "e") (key-binding (kbd "C-y")))
+* 之所以要写在 define-minor-mode 里边，是因为在不同的 buffer 里，(key-binding (kbd "C-y") 所获取到的 'yank 这个命令可能会被覆盖，所以需要在每次激活 Visual-Mode 时都重新写一遍。
+* 对我个人而言，我在绑定 visual-mode 的快捷键时有严格的对应规则，所有的 "C-a" 一类的快捷键，在 visual-mode 里只需要按 "a" 一个键就可以触发，这样我就不用再按该死的 Ctrl 键了。但想实现如此方便的功能，就意味着必须要对这二十几个键挨个设置一遍，即便 "C-a" 和 "a" 的命令是一样的，但也不得不写两行代码分别设置一次。那有没有什么更简单的设置方式呢？
+* 上一期我介绍了一个宏 m-map-key， 用于在设置快捷键时自动判断是直接映射还是映射到悬空的代理键上。现在我来往里加入更复杂的逻辑，把 visual-mode 的设置需要也一并包含进去
+(defmacro m-map-key (obj key)
+  `(let ((keystr (cadr ',key)) mapkey vmchar)
+     (define-key key-translation-map
+       ,key (if (not (symbolp ,obj)) ,obj
+	      (setq mapkey (kbd (concat "M-g " keystr)))
+	      (global-set-key mapkey ,obj) mapkey))
+     (setq vmchar (substring keystr -1))
+     (when (and (string= "C" (substring keystr 0 1))   ; if "C-" prefix
+		(string-match "[[:alnum:]`\\]" vmchar) ; if some certain keys
+		(or (= 3 (length keystr))
+		    (when (string= "S" (substring keystr 2 3)) ; if it is upcase
+		      (setq vmchar (upcase vmchar)) t)))
+       (define-key visual-mode-map
+	 (kbd vmchar) (if (symbolp ,obj) ,obj (key-binding ,obj))))))
+* 这个代码实在有点复杂，我就不细讲了。总而言之它会在你设置
+(m-map-key 'delete-pair (kbd "C-S-d"))
+* 时自动判断这个键是不是 "C-" 前缀、是不是大写字母、是不是在你所限定的字符范围里，然后绑定为你想让它绑定的对象，无论是某个命令还是另一个快捷键。
+* 好了，以上就是关于快捷键绑定的所有内容，有问题欢迎留言讨论吧。下一期预告：行操作，包括但不限于——移动到行首但跳过缩进/注释符号，保持在行首/行尾/缩进时上下移动，剪切/复制当前行且跳过缩进/注释符号，交换两行并光标跟随，交换段落并光标跟随，在 use-region-p 的情况下交换光标等等。如果你常跟各种 Elisp 源代码打交道的话，你会发现其实有很多命令是可以三三两两融合到一起的。
