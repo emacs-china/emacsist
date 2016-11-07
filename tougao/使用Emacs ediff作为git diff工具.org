@@ -15,13 +15,12 @@ git diff默认的工具太难看了，而Emacs提供的Ediff则直观的多。 �
 1. 创建一个脚本来帮助你调用Ediff进行文件比较。
    #+BEGIN_SRC sh
      #!/bin/bash
-
      emacsclient -a "" -c -n --eval "(require 'ediff)" --eval "(ediff-files \"$1\" \"$2\")"
    #+END_SRC
      
-     注意我这里使用了emacsclient ，避免每次都要打开一个Emacs进程。
+   注意我这里使用了emacsclient ，避免每次都要打开一个Emacs进程。
 
-     emacsclient后面的 =-a= 参数表示如果没有启动Emacs daemon的话，则自动启动一个。 所以你无需事先启动Emacs daemon。
+   emacsclient后面的 =-a= 参数表示如果没有启动Emacs daemon的话，则自动启动一个。 所以你无需事先启动Emacs daemon。
 
 2. 用git config配置difftool
    
