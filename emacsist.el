@@ -55,8 +55,7 @@
                  (f-filename item)
                  (f-base item)))
      (f-files apath
-              (lambda (file) (f-ext? file "org"))))
-    ))
+              (lambda (file) (f-ext? file "org"))))))
 
 (defun emacsist-append-articles-list ()
   "Find the correct position"
@@ -71,12 +70,11 @@
                   (insert item)
                   (insert "\n"))
               (emacsist-articles-list-content))
-        (save-buffer)
-        ))))
+        (save-buffer)))))
 
 ;;;###autoload
 (defun emacsist-publish ()
-  "Publish current file (in tougao dir) to articles."
+  "Publish current file (in tougao dir) to article."
   (interactive)
   (let* ((fname (buffer-file-name))
          (sname (if fname (f-filename fname) ""))
@@ -93,8 +91,7 @@
           (kill-buffer)
           (find-file des-name)
           (message "src file=%s, dest file=%s" fname des-name))
-      (message "current file %s isn't emacsist tougao file." fname)
-      )))
+      (message "current file %s isn't emacsist tougao file." fname))))
 
 (provide 'emacsist)
 ;;; emacsist.el ends here
