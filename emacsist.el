@@ -90,6 +90,8 @@
                                   sname)
                           emacsist-repo-root))
           (f-move fname des-name)
+          (kill-buffer)
+          (find-file des-name)
           (message "src file=%s, dest file=%s" fname des-name))
       (message "current file %s isn't emacsist tougao file." fname)
       )))
