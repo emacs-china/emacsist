@@ -41,6 +41,7 @@
   :group 'emacsist
   :type 'string)
 
+;;;###autoload
 (defun emacsist ()
   (interactive)
   (emacsist-append-articles-list)
