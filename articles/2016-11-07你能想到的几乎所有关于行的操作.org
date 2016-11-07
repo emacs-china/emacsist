@@ -1,0 +1,199 @@
+* 你能想到的几乎所有关于行的操作
+首发于Ghost in Emacs
+
+** 这一期我们专门讨论行操作。这里所谓的“行操作”，是指所有跟行有关的操作，在一般的编辑器里，常见的行操作有移动到行首/行尾，上下移动，复制/选中/剪切/注释整行，交换两行；如果算上段落操作的话，类似的就还有移动到段首/段尾，复制/选中/剪切/注释段落，交换两段——我能想到的差不多就这些了。
+
+** 但是在 Emacs 里，你能做的远远不止。下面就来分享一下我目前为止自己写的所有相关命令。这里边需要用到的内建函数大概有十来二十多个，另外也有一些我自己造的新轮子。
+
+** 一般来讲，一行代码有三个关键的位置点，一是行首，二是从行首出发跳过缩进，也就是该行的第一个字符，三是行尾。我写了两个命令，可以控制光标在这三个点之间循环切换。切换的顺序分别是
+
+ #+BEGIN_SRC emacs-lisp
+ c-move-forward-line: bol -> skip-bol -> eol -> bol
+ c-move-backward-line: eol -> skip-bol ->bol ->eol
+ #+END_SRC
+
+** 这里的前缀 "c-" 代表这是一个 interactive function 也就是 command ，bol 和 eol 分别代表 beginning-of-line 和 end-of-line 。这两个命令的具体定义如下：
+
+ #+BEGIN_SRC emacs-lisp
+ (defun c-move-forward-line ()
+   (interactive)
+   (if (eq major-mode 'org-mode)
+       (cond ((eolp) (f-skip-bol) (setq -move 1))
+       (t (end-of-line) (setq -move 2)))
+     (cond ((and (eolp) (not (bolp))) (beginning-of-line) (setq -move 0))
+     ((>= (current-column) (f-skip-bol t)) (end-of-line) (setq -move 2))
+     (t (f-skip-bol) (setq -move 1)))))
+
+ (defun c-move-backward-line ()
+   (interactive)
+   (let ((col (f-skip-bol t)))
+     (if (eq major-mode 'org-mode)
+   (cond ((and (<= (current-column) col) (not (= col 2)))
+          (org-up-element) (skip-chars-forward -chars) (setq -move 1))
+         (t (f-skip-bol) (setq -move 1)))
+       (cond ((and (bolp) (not (eolp))) (end-of-line) (setq -move 2))
+       ((<= (current-column) col) (beginning-of-line) (setq -move 0))
+       (t (f-skip-bol) (setq -move 1))))))
+
+ (defvar -chars " \t")
+ (make-variable-buffer-local '-chars)
+
+ (defvar -move 0)
+ (make-variable-buffer-local '-move)
+ #+END_SRC
+
+** 大体的思路就是先获取当前的光标，判断其处于哪个位置，然后移动到下一个指定位置：bol、skip-bol 或者 eol。命令里对 org-mode 下的行为做了特殊规定，具体效果可自行试验。这里要着重讲一下 f-skip-bol 这个轮子，它是用来判断当前光标是否位于 skip-bol 以及移动到此处的函数。其定义如下：
+
+ #+BEGIN_SRC emacs-lisp
+ (defun f-skip-bol (&optional save)
+   (let ((col (save-excursion
+          (beginning-of-line)
+          (skip-chars-forward -chars)
+          (current-column))))
+     (unless save (move-to-column col)) col))
+ #+END_SRC
+
+** 可以看到它的作用就是让光标移动到 skip-bol 处，如果可选参数非 non-nil 的话，则不移动光标，只是单纯返回 skip-bol 的列数。这里还有一个重要的变量是 -chars，它的默认值是 " \t"，即空格加 Tab ，之所以要额外定义它，主要是为了方便在不同的 Major-Mode 下添加新的符号，例如在 org-mode 里跳过标题栏开头的*号。
+** 有了这几个东西之后，就可以来优化一下原本的上下方向键了：指定光标在上下移动的时候，保持在行首/行尾或者 skip-bol 这三个位置，或者执行正常的移动。指定方式通过 -move 这个变量来实现，其值分别为 bol -> 0, skip-bol -> 1, eol -> 2。于是有：
+ #+BEGIN_SRC emacs-lisp
+ (defun f-move-up-or-down (n)
+   (unless (minibufferp)
+     (cond ((and (= -move 2) (eolp))
+      (next-line n) (end-of-line))
+     ((and (= -move 1) (= (current-column) (f-skip-bol t)))
+      (next-line n) (f-skip-bol))
+     (t (next-line n) (setq -move 0)))
+     (f-visual-mode)))
+
+ (defun c-move-down ()
+   (interactive)
+   (f-move-up-or-down 1))
+
+ (defun c-move-up ()
+   (interactive)
+   (f-move-up-or-down -1))
+ #+END_SRC
+
+** 通过检测 -move 以及当前位置来判断是否需要在上下移动时锁定 bol/skip-bol/eol。函数最后的 f-visual-mode 是指在执行这样的操作之后触发 visual-mode （见上一期文章），之后无论是复制还是干嘛就都可以单键操作了。
+** 如果是对于光标在段落间的移动，事情就要简单很多，代码如下：
+
+ #+BEGIN_SRC emacs-lisp
+ (defun c-paragraph-backward ()
+   (interactive)
+   (unless (minibufferp)
+     (if (not (eq major-mode 'org-mode))
+   (backward-paragraph)
+       (org-backward-element)
+       (skip-chars-forward -chars))
+     (f-visual-mode)))
+
+ (defun c-paragraph-forward ()
+   (interactive)
+   (unless (minibufferp)
+     (if (not (eq major-mode 'org-mode))
+   (forward-paragraph)
+       (org-forward-element)
+       (skip-chars-forward -chars))
+     (f-visual-mode)))
+ #+END_SRC
+
+** 同样的，这里对 org-mode 做了特殊的修饰，并选择在移动结束后触发 visual-mode。这可以说是一个非常贴心的设定，因为通常情况下，编辑状态往往对应极小范围的移动，而对于诸如段落这样的大范围的移动，往往伴随的是复制粘贴，另起一行或者退回上一行这样的非输入操作，这时使用 visual-mode 简直再合适不过了。
+** 除光标移动以外，交换两行/两段落的也是非常常见的需求，但在一般的编辑器包括 Emacs 里，交换两行之后不会有光标跟随，这样的坏处是你无法实现连续操作（例如把原本第1行的代码，往下一直挪挪挪，插到原本的第4、5行之间）。而对于段落移动，Emacs 所提供的函数同样没有光标跟随，且在交换第1、2段时由于第1段前没有空行而导致 Bug。所以这里我特地重写了这四个函数：
+
+ #+BEGIN_SRC emacs-lisp
+ (defun c-transpose-lines-down ()
+   (interactive)
+   (unless (minibufferp)
+     (delete-trailing-whitespace)
+     (end-of-line)
+     (unless (eobp)
+       (forward-line)
+       (unless (eobp)
+   (transpose-lines 1)
+   (forward-line -1)
+   (end-of-line)))))
+
+ (defun c-transpose-lines-up ()
+   (interactive)
+   (unless (minibufferp)
+     (delete-trailing-whitespace)
+     (beginning-of-line)
+     (unless (or (bobp) (eobp))
+       (forward-line)
+       (transpose-lines -1)
+       (beginning-of-line -1))
+     (skip-chars-forward -chars)))
+
+ (defun c-transpose-paragraphs-down ()
+   (interactive)
+   (unless (minibufferp)
+     (let ((p nil))
+       (delete-trailing-whitespace)
+       (backward-paragraph)
+       (when (bobp) (setq p t) (newline))
+       (forward-paragraph)
+       (unless (eobp) (transpose-paragraphs 1))
+       (when p (save-excursion (goto-char (point-min)) (kill-line))))))
+
+ (defun c-transpose-paragraphs-up ()
+   (interactive)
+   (unless (or (minibufferp) (save-excursion (backward-paragraph) (bobp)))
+     (let ((p nil))
+       (delete-trailing-whitespace)
+       (backward-paragraph 2)
+       (when (bobp) (setq p t) (newline))
+       (forward-paragraph 2)
+       (transpose-paragraphs -1)
+       (backward-paragraph)
+       (when p (save-excursion (goto-char (point-min)) (kill-line))))))
+ #+END_SRC
+
+** 这四个函数的代码都有点长，主要是把各种边界条件（如文件头、文件尾，首行非空、trailing-whitespace）都给考虑进去了，把它们拷到你的配置文件里试一下，你会发现这四个交换内容的函数简直贴心好用到爆！
+** 最后再贴几组将源码优化过后的常见函数，代码虽然简单，但同样贴心实用，大概看一下函数名你就知道是怎么回事。我就不赘述了。
+
+ #+BEGIN_SRC emacs-lisp
+ (defun c-copy-buffer ()
+   (interactive)
+   (save-excursion
+     (goto-char (point-max))
+     (unless (or (eobp) buffer-read-only) (newline)))
+   (delete-trailing-whitespace)
+   (kill-ring-save (point-min) (point-max))
+   (unless (minibufferp) (message "Current buffer copied")))
+
+ (defun c-indent-paragraph ()
+   (interactive)
+   (save-excursion
+     (mark-paragraph)
+     (indent-region (region-beginning) (region-end))))
+
+ (defun c-kill-region ()
+   (interactive)
+   (if (use-region-p)
+       (kill-region (region-beginning) (region-end))
+     (kill-whole-line)
+     (back-to-indentation)))
+
+ (defun c-kill-ring-save ()
+   (interactive)
+   (if (use-region-p)
+       (kill-ring-save (region-beginning) (region-end))
+     (save-excursion
+       (f-skip-bol)
+       (kill-ring-save (point) (line-end-position)))
+     (unless (minibufferp) (message "Current line copied"))))
+
+ (defun c-set-or-exchange-mark (arg)
+   (interactive "P")
+   (if (use-region-p) (exchange-point-and-mark)
+     (set-mark-command arg)))
+
+ (defun c-toggle-comment (beg end)
+   (interactive
+    (if (use-region-p) (list (region-beginning) (region-end))
+      (list (line-beginning-position) (line-beginning-position 2))))
+   (unless (minibufferp)
+     (comment-or-uncomment-region beg end)))
+ #+END_SRC
+
+** 这一期算是大出血了，掏出了不少我自己辛苦调教多年的压箱底的配置。下一期讲点轻松的内容：Emacs 的配置文件架构，即如何将 init.el 的配置代码分散到多个角色不同的文件中去，同时实现自动化的包管理以及多终端同步。
