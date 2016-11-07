@@ -74,5 +74,25 @@
         (save-buffer)
         ))))
 
+;;;###autoload
+(defun emacsist-publish ()
+  "Publish current file (in tougao dir) to articles."
+  (interactive)
+  (let* ((fname (buffer-file-name))
+         (sname (if fname (f-filename fname) ""))
+         des-name)
+    (if (and fname
+             (string= (expand-file-name "tougao" emacsist-repo-root)
+                      (f-dirname fname)))
+        (progn
+          (setq des-name (expand-file-name
+                          (format "articles/%s%s" (format-time-string "%Y-%m-%d" (current-time))
+                                  sname)
+                          emacsist-repo-root))
+          (f-move fname des-name)
+          (message "src file=%s, dest file=%s" fname des-name))
+      (message "current file %s isn't emacsist tougao file." fname)
+      )))
+
 (provide 'emacsist)
 ;;; emacsist.el ends here
