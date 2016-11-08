@@ -27,7 +27,8 @@ Emacs 微信公众号收录文章存档，每周一定期推送一篇文章。�
 (setq emacsist-repo-root "/path/to")
 #+END_SRC
 
-执行 emacsist.el 里的 emacsist 命令就可以生成往期文章列表。
+执行 emacsist.el 里的 *M-x emacsist* 命令就可以生成往期文章列表。如果当前buffer打开的是 tougao/
+目录下的文章，执行 *M-x emacsist-publish* 可以将该文章发布到 article/ 下（如果当前文章已经收录到Emacs公众号）。
 
 ** 往期文章
 + [[./articles/2016-10-23如何搭建Emacs-LaTeX-make工具链.org][2016-10-23如何搭建Emacs-LaTeX-make工具链]]
