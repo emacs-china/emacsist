@@ -82,7 +82,7 @@
     (if (and fname
              (string= (expand-file-name "tougao" emacsist-repo-root)
                       (f-dirname fname)))
-        (progn
+        (when (yes-or-no-p (format "确定将当前文章:%s发布？" sname))
           (setq des-name (expand-file-name
                           (format "articles/%s%s" (format-time-string "%Y-%m-%d" (current-time))
                                   sname)
@@ -90,8 +90,8 @@
           (f-move fname des-name)
           (kill-buffer)
           (find-file des-name)
-          (message "src file=%s, dest file=%s" fname des-name))
-      (message "current file %s isn't emacsist tougao file." fname))))
+          (message "原稿件:%s, 已经发布到:%s" fname des-name))
+      (message "当前文件 %s 不在目录tougao/下，不能发布！" fname))))
 
 (provide 'emacsist)
 ;;; emacsist.el ends here
