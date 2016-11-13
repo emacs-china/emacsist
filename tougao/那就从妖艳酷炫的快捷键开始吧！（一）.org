@@ -1,4 +1,4 @@
-#+TITLE: bookmarks 实践
+#+TITLE: 那就从妖艳酷炫的快捷键开始吧！（一）
 #+AUTHOR:  wolray
 #+DATE: 2016-10-31
 #+LANGUAGE: zh
@@ -8,94 +8,117 @@
 -----
 
 * 说明
-本文首发于知乎专栏Ghost in Emacs， 题目灵感取自于日本动漫 Ghost in the Shell （攻壳机动队）。
+本文首发于知乎专栏 Ghost in Emacs， 题目灵感取自于日本动漫 Ghost in the Shell（攻壳机动队）。
 
 * 前言
-在我看来，Emacs 正是一款拥有灵魂的编辑器，其灵活的 Lisp 语言，优雅的S表达式，强大的宏命令，丰富的插件库，可以说为用户提供了几乎无限的自由定制（想象力）空间。
-每个人的 Ghost 都是独一无二的，相信每个真正 Emacs 用户的配置也是如此。所以本专栏保证，从始至终所写的每一个函数，实现的每一个宏，都是绝对的原创。
-部分从源码中优化改进的函数也会注明。
+在我看来，Emacs 正是一款拥有灵魂的编辑器，其灵活的 Lisp 语言，优雅的 S 表达式，强大的宏命令，丰富的插件库，可以说为用户提供了几乎无限的自由定制（想象力）空间。
 
-* Emacs快捷键设置
-常见的 Emacs 的快捷键设置主要有四种类型:全局快捷键，全局映射键，基于 Major-Mode 的局部快捷键，
-以及基于 Minor-Mode 的局部快捷键，对应的命令分别是
+每个人的 Ghost 都是独一无二的，相信每个真正 Emacs 用户的配置也是如此。所以本专栏保证，从始至终所写的每一个函数，实现的每一个宏，都是绝对的原创。部分从源码中优化改进的函数也会注明。
 
+* Emacs 快捷键设置
+常见的 Emacs 的快捷键设置主要有四种类型:全局快捷键，全局映射键，基于 Major-Mode 的局部快捷键，以及基于 Minor-Mode 的局部快捷键，对应的命令分别是
+
+#+BEGIN_SRC emacs-lisp
 (global-set-key (kbd "A") 'your-command)
 (define-key key-translation-map (kbd "A") (kbd "B"))
 (local-set-key (kbd "A") 'your-command)
 (define-key your-minor-mode-map (kbd "A") 'your-command)
+#+END_SRC
 
-这里没有提到 Spacemacs 的特色也就是 Evil-Mode 。实际上我没用过它们，并不了解具体是怎么实现的。不过不用担心，
-Emacs 支持用简短的 Lisp 代码自定义一个类似于 Vim 的 Visual-Mode，大概就20行左右。
-轻松做到单键执行大部分操作，拯救你的小拇指！具体内容放在第二期讲。
+这里没有提到 Spacemacs 的特色也就是 Evil-Mode。实际上我没用过它们，并不了解具体是怎么实现的。不过不用担心，Emacs 支持用简短的 Lisp 代码自定义一个类似于 Vim 的 Visual-Mode，大概就 20 行左右。轻松做到单键执行大部分操作，拯救你的小拇指！具体内容放在第二期讲。
 
 如果要删除或者禁用某个键，是这样
 
+#+BEGIN_SRC emacs-lisp
 (global/local-unset-key (kbd "A"))
 (global/local-set-key (kbd "A") 'ignore/nil)
+#+END_SRC
 
 这里在代码中所使用的
+
+#+BEGIN_SRC emacs-lisp
 global/local
 'ignore/nil
+#+END_SRC
+
 代表着两种或多种不同的方式的并列，请注意。
 
 * 产生的问题：按键冲突
-以上内容很基础，用过的都明白。但其实绝大部分 Emacs 新手都会碰到的一个颇为棘手的问题是：
-键的冲突。例如你用
+以上内容很基础，用过的都明白。但其实绝大部分 Emacs 新手都会碰到的一个颇为棘手的问题是：键的冲突。例如你用
 
+#+BEGIN_SRC emacs-lisp
 global-set-key
+#+END_SRC
 
-定义好了你所需要的键，那它很可能会在进入 Major-Mode 之后被插件中已定义好的局部键给覆盖了
-（或者你明明禁用了某个键，却在某个 Major-Mode 里发现它又复活了）。你为了防止这种情况的发生于是用
+定义好了你所需要的键，那它很可能会在进入 Major-Mode 之后被插件中已定义好的局部键给覆盖了（或者你明明禁用了某个键，却在某个 Major-Mode 里发现它又复活了）。你为了防止这种情况的发生于是用
+
+#+BEGIN_SRC emacs-lisp
 define-key key-translation-map
-直接暴力映射，这样看起来谁也改不了。然而更麻烦的还在后头，假如你用全局映射的方式使得A键变成了B键，
-你在进入某个 Major-Mode 之后A还是牢牢绑在B上头，但悲剧的是B原本的命令被局部设置给改了，于是A就又变成了不知道从哪儿冒出来的C。
+#+END_SRC
+
+直接暴力映射，这样看起来谁也改不了。然而更麻烦的还在后头，假如你用全局映射的方式使得 A 键变成了 B 键，你在进入某个 Major-Mode 之后 A 还是牢牢绑在 B 上头，但悲剧的是 B 原本的命令被局部设置给改了，于是 A 就又变成了不知道从哪儿冒出来的 C。
 
 * 解决办法
-这就是让新人普遍头疼的键冲突问题，对于键空间本就紧凑的原生 Emacs 而言简直就是一场灾难。
-不过好在解决的办法其实很简单：找一个没怎么用的 prefix 键作为专用的代理键，先映射到这个
-悬空的代理键上，然后再全局或者局部设置它。可以看下面的代码：
+这就是让新人普遍头疼的键冲突问题，对于键空间本就紧凑的原生 Emacs 而言简直就是一场灾难。不过好在解决的办法其实很简单：找一个没怎么用的 prefix 键作为专用的代理键，先映射到这个悬空的代理键上，然后再全局或者局部设置它。可以看下面的代码：
+
+#+BEGIN_SRC emacs-lisp
 (define-key key-translation-map (kbd "A") (kbd "M-g A"))
 (global/local-set-key (kbd "M-g A") 'your-command)
+#+END_SRC
 
-这样做的好处是，由于你把A映射到了一个稀有罕见的代理的前缀上头，所以永远不
-用担心会被局部键给覆盖了。你可能会觉得像这样每个键都得写两行代码很麻烦，那我们来写个宏好了：
+这样做的好处是，由于你把 A 映射到了一个稀有罕见的代理的前缀上头，所以永远不用担心会被局部键给覆盖了。你可能会觉得像这样每个键都得写两行代码很麻烦，那我们来写个宏好了：
 
+#+BEGIN_SRC emacs-lisp
 (defmacro m-map-key (obj key)
   `(let ((keystr (cadr ',key)) mapkey)
      (define-key key-translation-map ,key
        (if (not (symbolp ,obj)) ,obj
    (setq mapkey (kbd (concat "M-g " keystr)))
    (global-set-key mapkey ,obj) mapkey))))
+#+END_SRC
 
-在 Emacs 里，宏和函数的主要区别在于，函数的参数是在传入时 eval ，而
-宏则是传入并展开后再 eval 。所以你可以把一个全局变量作为参数传进宏里，然后重新给它赋值，
-具体这里不细讲。总之有了上面这个宏以后问题就变得很简单，你只需写
+在 Emacs 里，宏和函数的主要区别在于，函数的参数是在传入时 eval，而宏则是传入并展开后再 eval。所以你可以把一个全局变量作为参数传进宏里，然后重新给它赋值，具体这里不细讲。总之有了上面这个宏以后问题就变得很简单，你只需写
 
+#+BEGIN_SRC emacs-lisp
 (m-map-key 'your-command (kbd "A"))
+#+END_SRC
 
-就可以实现先映射到代理键再定义的功能。而对于某些容易被覆盖的快捷键而言，用直接映射会比较好，
-例如 "C-y" 代表的 'yank 到了 Org-Mode 里会被替换为 'org-yank 。
-如果你把某个键映射到了 "C-y" 上，那它也会随之变化。对于这种情况，直接写
+就可以实现先映射到代理键再定义的功能。而对于某些容易被覆盖的快捷键而言，用直接映射会比较好，例如 "C-y" 代表的 'yank 到了 Org-Mode 里会被替换为 'org-yank。如果你把某个键映射到了 "C-y" 上，那它也会随之变化。对于这种情况，直接写
+
+#+BEGIN_SRC emacs-lisp
 (m-map-key (kbd "B") (kbd "A"))
+#+END_SRC
 
-就可以，相关的判断逻辑已经写在上面的宏里边了。注意这里我采用了 Windows 系统 Scancode
-这种映射的顺序，按A的时候实际执行B。这个宏名字里的前缀 m- 代表着它是一个 macro，同理如果我定义
-一个函数会用 f- 做前缀，定义一个命令会用 c- 做前缀，定义一个变量会用 - 做前缀。后边可以陆续看到。
+就可以，相关的判断逻辑已经写在上面的宏里边了。注意这里我采用了 Windows 系统 Scancode 这种映射的顺序，按 A 的时候实际执行 B。这个宏名字里的前缀 m- 代表着它是一个 macro，同理如果我定义一个函数会用 f- 做前缀，定义一个命令会用 c- 做前缀，定义一个变量会用 - 做前缀。后边可以陆续看到。
 
 * 快捷键的优先级
-从这个例子中我们可以看出，Emacs 里不同的快捷键设置方式是有优先级区别的
-，具体来讲，优先级从高到低的顺序是：
-key-translation-map > minor-mode-map > local-set-key > global-set-key
+从这个例子中我们可以看出，Emacs 里不同的快捷键设置方式是有优先级区别的，具体来讲，优先级从高到低的顺序是：
 
-在你按照上述方式设置了代理映射的快捷键之后，你便可以在某些 Major-Mode 里很方便的设置局域快捷键，
-例如你希望在 python-mode 里让原本 'eval-last-sexp 的键变成运行当前行的 Python 代码，你可以这样写：
+#+BEGIN_SRC emacs-lisp
+key-translation-map > minor-mode-map > local-set-key > global-set-key
+#+END_SRC
+
+在你按照上述方式设置了代理映射的快捷键之后，你便可以在某些 Major-Mode 里很方便的设置局域快捷键，例如你希望在 python-mode 里让原本 'eval-last-sexp 的键变成运行当前行的 Python 代码，你可以这样写：
+
+#+BEGIN_SRC emacs-lisp
 (defun f-python-mode ()
   (local-set-key (kbd "C-x C-e") 'f-python-shell-send-line)
   (local-set-key (kbd "M-g C-y") 'f-python-shell-send-line))
 (add-hook 'python-mode-hook 'f-python-mode)
+#+END_SRC
 
-这里 'eval-last-sexp 原本的键是 "C-x C-e"，可以在当前 Mode 下修改它的绑定函数。
-由于我个人还另外设置了
+这里 'eval-last-sexp 原本的键是 "C-x C-e"，可以在当前 Mode 下修改它的绑定函数。由于我个人还另外设置了
+
+#+BEGIN_SRC emacs-lisp
 (m-map-key 'eval-last-sexp (kbd "C-y"))
-所以我需要在设置局部按键时，写出相应的代理映射键即 "M-g C-y"。
-另外要注意的是，Python-Mode 里并没有自带的“运行当前行”的命令，所以我自己写了一个 'f-python-shell-send-line ，
+#+END_SRC
+
+所以我需要在设置局部按键时，写出相应的代理映射键即 "M-g C-y"。另外要注意的是，Python-Mode 里并没有自带的“运行当前行”的命令，所以我自己写了一个 'f-python-shell-send-line，这一类的实用小命令我写过很多很多，在后续的文章中也会陆续讲到。为了保证能有尽量长期的干货输出，这一期就先讲这么多。
+
+下一期我会演示怎么自己写一个类似于 Evil 的 Visual-Mode，并在本期所讲的
+
+#+BEGIN_SRC emacs-lisp
+m-map-key
+#+END_SRC
+
+的基础上加入更复杂的逻辑，使其可以同时执行 Visual-Mode 快捷键设置。
