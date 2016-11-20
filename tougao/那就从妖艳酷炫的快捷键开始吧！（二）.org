@@ -1,22 +1,24 @@
-* 首发于
-Ghost in Emacs
-那就从妖艳酷炫的快捷键开始吧！（二）
+#+TITLE: 那就从妖艳酷炫的快捷键开始吧！（二）
+
+* 说明
+首发于短乎专栏 Ghost in Emacs
 
 * 前言
-大家好，第一期我们简单梳理了一下 Emacs 里各种快捷键绑定方式的区别和优先级，
-并介绍了一种通过悬空代理键的方式避免键冲突的技巧。这一期我们的主题是 Minor-Mode 下的快捷键——掌握了
-Minor-Mode 的编写技巧，就代表着你获得了在 Emacs 里随意设置快捷键的最高自由：你不仅可以在原生的
+上一篇我们简单梳理了一下 Emacs 里各种快捷键绑定方式的区别和优先级，
+并介绍了一种通过悬空代理键的方式避免键冲突的技巧。本文我们的主题是 minor-mode 下的快捷键。掌握了
+minor-mode 的编写技巧，就代表着你获得了在 Emacs 里随意设置快捷键的最高自由：你不仅可以在原生的
 Emacs 下自定义一套类似于 Vim 的 Visual-Mode，还可以在每一个快捷键上重复叠加理论上无限多个命令
 ，将原本局促的键空间拓展至无穷，而且再也不必记忆诸如 "C-c C-x C-a" 这种坑爹的长快捷键了。
 
-* Minor-mode
-如上一期所说，Minor-Mode 下的快捷键具有仅次于 key-translation-map 的优先级，一般情况下它是
+* minor-mode
+如上一期所说，minor-mode 下的快捷键具有仅次于 key-translation-map 的优先级。一般情况下它是
 默认关闭的，当你通过某个命令将其触发之后，其本身自带的快捷键布局便开始生效，给你提供在当前临时的
 编辑状态下的相关操作接口，例如常见的 isearch-mode cua-rectangle-mark-mode。
 
-* 定义一个Minor-mode
+* 如何定义一个minor-mode?
+minor-mode 的编写其实非常简单，代码如下
 
-Minor-Mode 的编写其实非常简单，代码如下
+#+BEGIN_SRC emacs-lisp
 (define-minor-mode visual-mode
   :init-value nil
   ;; :global t
@@ -28,11 +30,14 @@ Minor-Mode 的编写其实非常简单，代码如下
     (define-key visual-mode-map (kbd "y") (key-binding (kbd "M-g C-y")))
     ))
 (define-key visual-mode-map (kbd "h") 'mark-paragraph)
-这里我们定义了一个 visual-mode，于此同时系统会再另外生成一个变量、一个命令，名字都叫做
+#+END_SRC
+
+这里我们定义了一个 visual-mode。与此同时,系统会再另外生成一个变量、一个命令，名字都叫做
 visual-mode。变量代表着当前 visual-mode 是否激活，命令则用于开关。上面代码中的 :init-value
-的意思是该变量的初始值，也就是起始状态是开或者关；:global 的意思是该 Minor-Mode 是否全局，
+的意思是该变量的初始值，也就是起始状态是开或者关；:global 的意思是该 minor-mode 是否全局，
 默认是局部的（buffer local）；:lighter 是模式开启时在 mode-line 上的提示文字。
 
+* minor-mode中的key-map
 这里最重要的是这个 :keymap。按照上面的格式设置后，系统会自动生成一个叫做 visual-mode-map
 的变量，然后我们便可以通过 define-key 来设置该 map 下的键绑定了。就是这么简单！
 
