@@ -2,7 +2,7 @@
 #+AUTHOR: wolray
 
 * 说明
-首发于短乎专栏 Ghost in Emacs
+本文首发于知乎专栏 Ghost in Emacs
 
 * 前言
 上一篇我们简单梳理了一下 Emacs 里各种快捷键绑定方式的区别和优先级，
@@ -91,3 +91,5 @@ visual-mode。变量代表着当前 visual-mode 是否激活，命令则用于�
 然后绑定为你想让它绑定的对象，无论是某个命令还是另一个快捷键。
 
 好了，以上就是关于快捷键绑定的所有内容。
+
+原文链接： https://zhuanlan.zhihu.com/p/23187556?refer=ghostinemacs
