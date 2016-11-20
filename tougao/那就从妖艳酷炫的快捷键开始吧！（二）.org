@@ -1,5 +1,6 @@
 #+TITLE: 那就从妖艳酷炫的快捷键开始吧！（二）
 #+AUTHOR: wolray
+#+OPTIONS: toc:nil
 
 * 说明
 本文首发于知乎专栏 Ghost in Emacs
