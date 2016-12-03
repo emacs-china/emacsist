@@ -2,7 +2,7 @@
 #+AUTHOR: lujun9972
 #+CATEGORY: Emacs之怒
 #+DATE: [2016-11-28 周一 15:23]
-#+OPTIONS: ^:{}
+#+OPTIONS: toc:nil
 
 Emacs作为一款文本编辑器已经为大家所熟知,但是可能比较少人会想到它还能用来像python,ruby一样作为一门脚本语言来用.
 

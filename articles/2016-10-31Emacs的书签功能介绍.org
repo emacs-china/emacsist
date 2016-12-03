@@ -5,6 +5,7 @@
 #+LANGUAGE: zh
 #+LATEX_HEADER: \usepackage{xeCJK}
 #+LATEX_HEADER: \setCJKmainfont{Microsoft YaHei}
+#+OPTIONS: toc:nil
 
 #+SETUPFILE: ~/github/org-html-themes/setup/theme-readtheorg.setup
 
