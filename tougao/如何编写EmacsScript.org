@@ -83,7 +83,7 @@ Emacs为了遵循shell script的shebang标准，特意将第一行内容中的�
 
   Emacs在执行完EmacsScript中的语句之后，会检查 =command-line-args-left= 中是否包含有以 =-= 开头的选项，并在该变量中查找并运行对应的handler-function. 每处理完一个选项之后，就将该参数从 =command-line-args-left= 中删除掉。
 
-  该变量是元素为`(option 。 handler-function)'的alist. 这里
+  该变量是元素为`(option . handler-function)'的alist. 这里
 
   - option为command-line argument中的`-option'参数(*带-*),为字符串格式
 
