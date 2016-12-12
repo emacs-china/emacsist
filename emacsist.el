@@ -55,7 +55,8 @@
                  (f-filename item)
                  (f-base item)))
      (f-files apath
-              (lambda (file) (f-ext? file "org"))))))
+              (lambda (file) (or (f-ext? file "org")
+                                 (f-ext? file "md")))))))
 
 (defun emacsist-append-articles-list ()
   "Find the correct position"
