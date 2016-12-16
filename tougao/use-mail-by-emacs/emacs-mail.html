@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<title>Emacs中使用Rmail收取邮件</title>
+<!-- 2016-12-16 Fri 17:21 -->
+<meta  http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta  name="generator" content="Org-mode" />
+<meta  name="author" content="XueShumeng" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { color: green; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  pre.src-sh:before    { content: 'sh'; }
+  pre.src-bash:before  { content: 'sh'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-R:before     { content: 'R'; }
+  pre.src-perl:before  { content: 'Perl'; }
+  pre.src-java:before  { content: 'Java'; }
+  pre.src-sql:before   { content: 'SQL'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.right  { text-align: center;  }
+  th.left   { text-align: center;   }
+  th.center { text-align: center; }
+  td.right  { text-align: right;  }
+  td.left   { text-align: left;   }
+  td.center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara:nth-child(2) { display: inline; }
+  .footpara { display: block; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2013 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">Emacs中使用Rmail收取邮件</h1>
+<p>
+因为Linux下工作，邮件使用频率较高。遂选择一款好的邮件客户端是件必要的事情。
+经两天的间断时间，简单配置了Emacs中使用Mail、Rmail用以收发邮件。在此，
+只简单介绍Rmail的使用。Rmail是什么呢？我认为Rmail是一个利用本地应用movemail
+，将本地用户邮箱或远程邮箱(支持多种协议)里的新邮件合并追加到Primary
+ Mail File里的Emacs插件。下面图片希望可以有助于快速熟悉Rmail。在此也会
+根据下图来介绍Rmail。<br  />
+<img src="./images/struct.png" alt="struct.png" /><br  />
+</p>
+<div id="outline-container-sec-1" class="outline-2">
+<h2 id="sec-1"><span class="section-number-2">1</span> Part - 1</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Rmail启动（M-x rmail）时会读取PrimaryMail Box和合并子邮箱
+（上图Mail Box 1-3）里的新邮件到Primary Mail Box。Emacs Lisp
+变量'rmail-file-name'用以定义Primary Mail File的位置，默认是"~/RMAIL"。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp">(setq rmail-file-name "~/mails/rmail") ; Rmail Primary Mail
+</pre>
+</div>
+<p>
+参阅手册<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Rmail-Basics.html#Rmail-Basics">Basic Concepts of Rmail</a>小节。
+</p>
+</div>
+</div>
+<div id="outline-container-sec-2" class="outline-2">
+<h2 id="sec-2"><span class="section-number-2">2</span> Part - 2</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+这部分就是上面提到的movemail了，也是收取安全类型为TLS等策略的邮件的重要环节。
+Rmail使用movemail应用来移动子邮箱里的新邮件到Primary Mail Box。
+可使用的movemail有两个。
+</p>
+<ol class="org-ol">
+<li>Emacs 自带的movemail
+</li>
+<li><a href="http://mailutils.org/">GNU Mailutils</a>下的movemail
+</li>
+</ol>
+<p>
+因为Emacs自带的movemail功能不如Mailutils的强大，最重要的是我们需要
+Emacs movemail不支持的TLS/STARTTLS。所以，安装Mailutils是件必要的事情。
+<a href="ftp://ftp.gnu.org/gnu/mailutils/mailutils-3.0.tar.gz">Mailutils下载</a>。安装后需要改变Emacs movemail的加载位置，如下：
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp">(setq rmail-movemail-program "/opt/mailutils-3.0/bin/movemail") ; movemail
+</pre>
+</div>
+<p>
+关于Movemail的细节在<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Movemail.html#Movemail">movemail program</a>，关于为什么换用Mailutils的movemail
+见<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Remote-Mailboxes.html#Remote-Mailboxes">Retrieving Mail from Remote Mailboxes</a>。
+</p>
+</div>
+</div>
+<div id="outline-container-sec-3" class="outline-2">
+<h2 id="sec-3"><span class="section-number-2">3</span> Part - 3</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+接下来就是需要配置子邮箱咯。根据<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Rmail-Inbox.html#Rmail-Inbox">Rmail Files and Inboxes</a>小节说明。子邮箱在默认不配置
+的情况下，movemail会读取/var/mail/username、/var/spool/mail/username或
+/usr/spool/mail/username，并合并新邮件到Primary Mail Box。然而，工作中经常查看的
+是远端服务器上邮箱里的邮件。所以，接下来配置Emacs lisp变量“rmail-primary-inbox-list”，
+将远端服务器邮箱配置在列。让movemail读取远端邮箱里的新邮件，并合并到Primary Mail Box。
+更多子邮箱的URL格式遵守:“PROTO://[USER[:PASSWORD]@]HOST-OR-FILE-NAME”格式。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp">(setq rmail-primary-inbox-list '("pop://user@server.com"
+				 "/var/mail/localuser"))
+</pre>
+</div>
+<p>
+这里多的添加了一个file协议的子邮箱，用以实践说明<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Movemail.html#Movemail">‘movemail’ program</a>里的协议。
+更多子邮箱配置细节参考<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Movemail.html#Movemail">movemail program</a>、<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Rmail-Inbox.html#Rmail-Inbox">Rmail Files and Inboxes</a>，远端邮箱配置
+参考<a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Remote-Mailboxes.html#Remote-Mailboxes">Retrieving Mail from Remote Mailboxes</a>。
+</p>
+</div>
+</div>
+<div id="outline-container-sec-4" class="outline-2">
+<h2 id="sec-4"><span class="section-number-2">4</span> 完</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+在此请原谅出现的疏漏和错误，否则你也不能怎么着我。^_^!<br  />
+   就不说我的邮箱是:xue.shumeng@yahoo.com，让你想批评我还找不到我。
+</p>
+<div class="org-src-container">
+
+<pre class="src src-lisp">(setq rmail-file-name "~/mails/rmail") ; Rmail Primary Mail Box
+(setq rmail-movemail-program "/opt/mailutils-3.0/bin/movemail") ; movemail
+(setq rmail-primary-inbox-list '("pop://user@server.com"        ; Remote Mail Box
+				 "/var/mail/localuser")  ; Local Mail Box
+      rmail-pop-password-required t) ; Prompt
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: Thu Dec 15 17:22:05 2016</p>
+<p class="author">Author: XueShumeng</p>
+<p class="date">Created: 2016-12-16 Fri 17:21</p>
+<p class="creator">Emacs 24.3.50.3 (Org mode 8.0.3)</p>
+<p class="validation"><a href="http://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>
