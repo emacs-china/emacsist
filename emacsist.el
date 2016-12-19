@@ -4,7 +4,7 @@
 
 ;; Author: Aborn Jiang <aborn.jiang@gmail.com>
 ;; Version: 0.1
-;; Package-Requires: ((emacs "24.4") (f "0.19.0"))
+;; Package-Requires: ((emacs "24.4") (f "0.19.0") (s "1.10.0"))
 ;; Keywords: utils, convenience
 
 ;; This file is NOT part of GNU Emacs.
@@ -30,6 +30,7 @@
 ;;; Code:
 
 (require 'f)
+(require 's)
 
 (defgroup emacsist nil
   "leanote mini group"
