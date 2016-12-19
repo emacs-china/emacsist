@@ -81,8 +81,7 @@
          (sname (if fname (f-filename fname) ""))
          des-name)
     (if (and fname
-             (string= (expand-file-name "tougao" emacsist-repo-root)
-                      (f-dirname fname)))
+             (s-starts-with? (expand-file-name "tougao/" emacsist-repo-root) fname))
         (when (yes-or-no-p (format "确定将当前文章:%s发布？" sname))
           (setq des-name (expand-file-name
                           (format "articles/%s%s" (format-time-string "%Y-%m-%d" (current-time))
