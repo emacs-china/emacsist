@@ -2,7 +2,7 @@
 #+AUTHOR: lujun9972
 #+CATEGORY: emacs
 #+DATE: [2016-11-18 周五 09:49]
-#+OPTIONS: ^:{}
+#+OPTIONS: ^:{} toc:nil
 
 * 显示并编辑符合条件的行
 Emacs内建occur命令，可以让你只显示buffer中匹配某正则表达式的行。
@@ -28,21 +28,21 @@ Emacs内建occur命令，可以让你只显示buffer中匹配某正则表达式�
 + < :: 跳转到 =*occur*= buffer的开始位置
 + > :: 跳转到 =*occur*= buffer的结束位置
 + 点击匹配行或在匹配行上按回车 :: 跳转到原buffer中匹配行的位置
-+ g :: 刷新 =*occur*= buffer中的搜索结果。 常用于原buffer修改之后。
++ g :: 刷新 =*occur*= buffer中的搜索结果，常用于原buffer修改之后
 + e :: 进入occur的编辑状态
 + C-c C-c :: 退出occur的编辑状态，并将修改应用到原buffer中
 + q :: 退出 =*occur*= buffer
 
 ** 编辑occur buffer
 
-=*occur*= buffer本来是只读的但是当你按下 =e= 后会发现buffer会变成可编辑的了。
+=*occur*= buffer本来是只读的，但是当你按下 =e= 后会发现buffer会变成可编辑的了。
 
-并且神奇的是，你在 =*occur*= buffer中修改的变动也会反映到原buffer中去。 (注意，只有对匹配行做出的修改会反映到原buffer中去，对上下文行的修改不会改变原buffer)
+并且神奇的是，你在 =*occur*= buffer中修改的变动也会反映到原buffer中去。 (注意：只有对匹配行做出的修改会反映到原buffer中去，对上下文行的修改不会改变原buffer)
 
 修改完后，按下 =C-c C-c=, =*occur*= 就又变回只读模式了。
 
 ** Multi-Occur
-若要在多个buffer上同时使用occur,则你需要用 =multi-occur=. 有两种方式调用 =multi-occur=:
+若要在多个buffer上同时使用occur，则你需要用 =multi-occur=. 有两种方式调用 =multi-occur=:
 
 一种方式是用 =M-x multi-occur-in-matching-buffers=. 该命令会让你输入一个正则表达式来匹配要在哪些buffer上调用 =occur=.
 
