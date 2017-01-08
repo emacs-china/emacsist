@@ -43,3 +43,4 @@
    + [[./articles/2016-12-19Emacs中使用Rmail收取邮件.org][2016-12-19Emacs中使用Rmail收取邮件]]
    + [[./articles/2016-12-26Emacs中那些不常用的行操作命令.org][2016-12-26Emacs中那些不常用的行操作命令]]
    + [[./articles/2017-01-02Emacs作为图片浏览器.org][2017-01-02Emacs作为图片浏览器]]
+   + [[./articles/2017-01-09如何玩转tramp?.org][2017-01-09如何玩转tramp?]]
