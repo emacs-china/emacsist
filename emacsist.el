@@ -49,7 +49,7 @@
   (message "生成文章列表成功!"))
 
 (defun emacsist-org-link-encode (origin)
-  "Org link encode for github."
+  "Org link special-characters encode for github."
   (s-replace "?" "%3F" origin))
 
 (defun emacsist-articles-list-content ()
