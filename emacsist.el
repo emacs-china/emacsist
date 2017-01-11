@@ -48,12 +48,16 @@
   (emacsist-append-articles-list)
   (message "生成文章列表成功!"))
 
+(defun emacsist-org-link-encode (origin)
+  "Org link encode for github."
+  (s-replace "?" "%3F" origin))
+
 (defun emacsist-articles-list-content ()
   (let* ((apath (expand-file-name "articles" emacsist-repo-root)))
     (mapcar
      #'(lambda (item)
          (format "+ [[./articles/%s][%s]]  "
-                 (f-filename item)
+                 (emacsist-org-link-encode (f-filename item))
                  (f-base item)))
      (f-files apath
               (lambda (file) (or (f-ext? file "org")
