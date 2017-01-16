@@ -95,7 +95,8 @@
           (f-move fname des-name)
           (kill-buffer)
           (find-file des-name)
-          (message "原稿件:%s, 已经发布到:%s" fname des-name))
+          (message "原稿件:%s, 已经发布到:%s" fname des-name)
+          (emacsist))      ;; 生成目录
       (message "当前文件 %s 不在目录tougao/下，不能发布！" fname))))
 
 (provide 'emacsist)
