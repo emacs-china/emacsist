@@ -59,9 +59,11 @@
          (format "+ [[./articles/%s][%s]]  "
                  (emacsist-org-link-encode (f-filename item))
                  (f-base item)))
-     (f-files apath
-              (lambda (file) (or (f-ext? file "org")
-                                 (f-ext? file "md")))))))
+     (sort                   ;; 按时间最新到最旧
+      (f-files apath
+               (lambda (file) (or (f-ext? file "org")
+                                  (f-ext? file "md"))))
+      'string>))))
 
 (defun emacsist-append-articles-list ()
   "Find the correct position"
