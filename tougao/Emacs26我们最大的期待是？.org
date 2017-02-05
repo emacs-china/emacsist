@@ -1,0 +1,13 @@
+#+TITLE: Emacs26我们最大的期待是？
+#+AUTHOR: aborn
+#+DATE: 2017-02-05
+#+EMAIL: aborn.jiang@gmail.com
+#+LANGUAGE: zh
+#+LATEX_HEADER: \usepackage{xeCJK}
+#+LATEX_HEADER: \setCJKmainfont{Microsoft YaHei}
+#+OPTIONS: toc:nil
+
+#+SETUPFILE: ~/github/org-html-themes/setup/theme-readtheorg.setup
+
+-----
+春节刚过，小编在这里给大家拜年了，祝大家在新的一年里学习进步，事业有成！
