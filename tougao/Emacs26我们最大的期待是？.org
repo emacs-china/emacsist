@@ -1,4 +1,4 @@
-#+TITLE: Emacs26我们最大的期待是？
+#+TITLE: Emacs 26, 我们最大的期待是？
 #+AUTHOR: aborn
 #+DATE: 2017-02-05
 #+EMAIL: aborn.jiang@gmail.com
@@ -10,4 +10,8 @@
 #+SETUPFILE: ~/github/org-html-themes/setup/theme-readtheorg.setup
 
 -----
-春节刚过，小编在这里给大家拜年了，祝大家在新的一年里学习进步，事业有成！
+
+* 前言
+  春节刚过，小编在这里给大家拜年了，祝大家在新的一年里学习进步，事业有成！在刚刚过去的
+  2016年里，Emacs 25版本发布了。按照每年发布一个大版本的惯例，在2017年里，期望
+  Emacs 26版本早点发布。
