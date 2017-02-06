@@ -31,6 +31,7 @@
    目录下的文章，执行 *M-x emacsist-publish* 可以将该文章发布到 article/ 下（如果当前文章已经收录到Emacs公众号）。
 
 ** 往期文章
+   + [[./articles/2017-02-06Emacs 26的多线程探索.org][2017-02-06Emacs 26的多线程探索]]
    + [[./articles/2017-01-16Emacs查看日志常用命令.org][2017-01-16Emacs查看日志常用命令]]
    + [[./articles/2017-01-09如何玩转tramp%3F.org][2017-01-09如何玩转tramp?]]
    + [[./articles/2017-01-02Emacs作为图片浏览器.org][2017-01-02Emacs作为图片浏览器]]
