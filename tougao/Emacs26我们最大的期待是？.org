@@ -25,9 +25,9 @@
   (链接为:https://github.com/jwiegley/emacs-async)。这种异步采用的是创建一个
   独立的子进程进行后台操作。这种异步方式最大的缺点是新的子进程远程与Emacs主进程共享
   上下文（如共享变量）,它完全是独立的。相反，多线程的方式有一个优点就是，多个线程间
-  共享同一个上下文，可修改同一个变量。。但有的人认为创建子进程这种异步才是正常的异步
-  方式，因为考虑如果采用多线程的方式会产生多个线程同步修改同个变量(或者Buffer)
-  导致Emacs行为诡异。
+  共享同一个上下文，可修改同一个变量。但有的人认为创建子进程这种异步才是正常的异步
+  方式，因为如果采用多线程的方式，考虑到会产生多个线程同时修改同个变量(或者Buffer)
+  可能导致Emacs行为诡异。
 
 * 安装Emacs 26开发版
   要想在Emacs 26发布之前使用多线程的功能，必需升级Emacs到最新的开发版本。Mac环境下，
@@ -47,3 +47,83 @@
 
   它的作用是创建一个新的线程，然后在这个线程中执行FUNCTION这个函数，当函数执行完成
   后退出时，这个线程就结束了。 NAME这个字符串参数是一个可选的，对这个线程进行命名。
+
+* 多线程的异步
+  下面，我们定义一个宏，将函数的执行在异步线程里：
+
+  #+BEGIN_SRC emacs-lisp
+(defmacro define-background-function-wrapper (bg-function fn)
+  (let ((is-loading-sym (intern (concat "*" (symbol-name bg-function) "-is-loading*"))))
+    `(progn
+       (defvar ,is-loading-sym nil)
+       (defun ,bg-function ()
+         (interactive)
+         (when ,is-loading-sym
+           (message ,(concat (symbol-name fn) " is already loading")))
+         (setq ,is-loading-sym t)
+         (make-thread (lambda ()
+                        (unwind-protect
+                            (,fn)
+                          (setq ,is-loading-sym nil))))))))
+  #+END_SRC
+
+  这个宏的作用是将函数 *fn* 运行在异步线程里。下面是一个使用的例子
+
+  #+BEGIN_SRC emacs-lisp
+(defun aborn/log-format (origin)
+  "Format `ORIGIN' log with timestamp."
+  (concat (format-time-string "[%Y-%m-%d %H:%M:%S] " (current-time))
+          origin))
+
+(defun threadaction ()
+  "Emacs multi-thread example runner."
+  (message (aborn/log-format "begin running..."))
+  (sleep-for 1)
+  (message (aborn/log-format "running at point 1"))
+  (sleep-for 5)
+  (message (aborn/log-format "running at point 6"))
+  (sleep-for 10)
+  (message (aborn/log-format "running at point 16"))
+  (sleep-for 15)
+  (message (aborn/log-format "finished bg-runner.")))
+
+(define-background-function-wrapper bg-threadaction threadaction)
+  #+END_SRC
+
+  然后我们执行 *M-x bg-threadaction* 会在*Messages*这个Buffer打印出执行日志!
+
+* 如果采用async怎么写
+  上面的例子，如果采用async进行异步操作，写法如下：
+
+  #+BEGIN_SRC emacs-lisp
+(defun async-threadaction ()
+  "Emacs async example runner."
+  (interactive)
+  (async-start
+   ;; 异步执行更新code操作
+   `(lambda ()
+      ,(async-inject-variables "\\`load-path\\'")
+      (require 'aborn-log)
+      (message (aborn/log-format "begin running..."))
+      (sleep-for 1)
+      (message (aborn/log-format "running at point 1"))
+      (sleep-for 5)
+      (message (aborn/log-format "running at point 6"))
+      (sleep-for 10)
+      (message (aborn/log-format "running at point 16"))
+      (sleep-for 15)
+      (message (aborn/log-format "finished bg-runner."))
+      )
+   (lambda (result)
+     (message "finished"))))
+  #+END_SRC
+
+  注意这里添加了这两句:
+  #+BEGIN_SRC emacs-lisp
+  ,(async-inject-variables "\\`load-path\\'")
+  (require 'aborn-log)
+  #+END_SRC
+  目地是将主进程的aborn-log的上线文引入到子进程中去，如果返这两句去掉，就会报这样的错误:
+  *error in process sentinel: async-handle-result: Symbol's function definition is void: aborn/log-format*
+
+* 小结
