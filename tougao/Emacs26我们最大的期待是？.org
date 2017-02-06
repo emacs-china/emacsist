@@ -38,7 +38,7 @@
   (源码下载: git clone --depth 1 git://git.sv.gnu.org/emacs.git)
 
 * 尝鲜Emacs多线程
-  安装好最新版本的Emacs后，下面我们下尝试下多线程。创建新的线程的函数是
+  安装好最新版本的Emacs后，下面我们尝试下多线程。创建新的线程的函数是
   *make-thread* ，这个函数的定义如下：
 
   #+BEGIN_SRC emacs-lisp
@@ -46,7 +46,7 @@
   #+END_SRC
 
   它的作用是创建一个新的线程，然后在这个线程中执行FUNCTION这个函数，当函数执行完成
-  后退出时，这个线程就结束了。 NAME这个字符串参数是可选的，对这个线程进行命名。
+  后退出时，这个线程就结束了。 NAME这个字符串参数是可选的，作用是对这个线程进行命名。
 
 * 多线程的异步
   下面，我们定义一个宏，将函数的执行在异步线程里：
@@ -124,7 +124,7 @@
   ,(async-inject-variables "\\`load-path\\'")
   (require 'aborn-log)
   #+END_SRC
-  目地是将主进程的aborn-log的上线文引入到子进程中去，如果将这两句去掉，就会报这样的错误:
+  目地是将主进程的aborn-log的上下文引入到子进程中去，如果将这两句去掉，就会报这样的错误:
   *error in process sentinel: async-handle-result: Symbol's function definition is void: aborn/log-format*
 
 * 小结
