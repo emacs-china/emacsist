@@ -32,7 +32,7 @@
 * 安装Emacs 26开发版
   要想在Emacs 26发布之前使用多线程的功能，必需升级Emacs到最新的开发版本。Mac环境下，
   下载Daily Build的开发版本，地址为：https://emacsformacosx.com/builds 。我
-  下载的是2017-02-04这天的Daily Build开发版。
+  下载的是2017-02-05这天的Daily Build开发版 (版本号:26.0.50.1)。
 
   如果是Linux环境，可以自己下载源代码进行源码编译安装。
   (源码下载: git clone --depth 1 git://git.sv.gnu.org/emacs.git)
@@ -127,3 +127,6 @@
   *error in process sentinel: async-handle-result: Symbol's function definition is void: aborn/log-format*
 
 * 小结
+  以上对Emacs 26多线程简单描述，我们发现多线程对Emacs带来了一种全新的编辑体验。我们在操作Emacs
+  也不再会受后台任务的影响。这将是Emacs 26最期待的功能。想尝鲜的同学可以下载Daily Build开发版。
+  想要Emacs 26 Release版本的同学，那只能希望Emacs 26早日发布了！
