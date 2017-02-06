@@ -1,4 +1,4 @@
-#+TITLE: Emacs 26, 我们最大的期待是？
+#+TITLE: Emacs 26的多线程探索
 #+AUTHOR: aborn
 #+DATE: 2017-02-05
 #+EMAIL: aborn.jiang@gmail.com
