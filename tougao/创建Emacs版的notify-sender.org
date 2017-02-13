@@ -1,0 +1,212 @@
+#+TITLE: 创建Emacs版的notify-sender
+#+AUTHOR: Administrator
+#+CATEGORY: Emacs之怒
+#+DATE: [2016-12-16 周五 09:12]
+#+OPTIONS: ^:{}
+
+
+最近对EmacsScript颇有兴趣,刚好翻看Emacs Lisp Manual的时候看到"Desktop Notifications"这一章,于是突发奇想,尝试实现一个Emacs版的notify-send.
+
+* notify-send
+notify-send是一个可以用来发送桌面通知的命令, 我经常在脚本中用它来通知一些值得关注的消息.
+
+简单起见,我们这次只实现notify-send常用的那几个选项:
+
+| -t | 设置超时时间 |
+| -u | 设置通知级别 |
+| -i | 设置显示图标 |
+
+* EmacsLisp的notification库
+若Emacs编译时开启了D-Bus支持,则通过加载`notifications'库,Emacs可以给某些操作系统发送"通知"
+
+(notifications-notify &rest params)
+
+通过D-Bus,使用Freedesktop notification protocol发送通知,该函数返回一个整数作为通知的id
+
+参数params可以是如下keyword参数
+
++ :bus BUS
+
+  D-Bus bus. 该参数只有在bus不是`:session'时使用
+
++ :title TITLE
+
+  通知的标题
+
++ :body TEXT
+
+  通知的内容. 某些notification server甚至支持HTML标签
+
++ :app-name NAME
+
+  发送通知的应用程序名称. 默认为`notifications-application-name'
+
++ :replaces-id ID
+
+  表示该通知要替代指定id的原先通知. ID必须是之前`notifications-notify'调用的返回值
+
++ :app-icon ICON-FILE
+
+  通知的图标文件. 若ICON-FILE为nil则不显示图标. 默认为`notifications-application-icon'
+
++ :actions (KEY TITLE KEY TITLE...)
+
+  一系列要应用的动作. KEY和TITLE都是字符串. 其中TITLE会在通知上以按钮的形式展现.
+
+  若要设置默认动作(通常该动作在点击notification时触发)的key为"default".
+
++ :timeout TIMEOUT
+
+  显示多少毫秒后自动关闭. 默认值-1表示超时时间遵照notification server的设置. 0表示无限时间
+
++ :urgency URGENCY
+
+  紧急的级别. 可以是'low,'normal或'critical
+
++ :action-items
+
+  若设置了该关键字,则TITLE string of the action也被解释为icon name
+
++ :category CATEGORY
+
+  通知的类型,字符串格式
+
++ :desktop-entry FILENAME
+
+  This specifies the name of the desktop filename representing the calling program, like `"emacs"'.
+
++ :image-data (WIDTH HEIGHT ROWSTRIDE HAS-ALPHA BITS CHANNELS DATA)
+
+  这是一个raw data 图像格式描述了宽,高,rowstride,是否有alpha通道,每个sample的比特数,通道和图像数据
+
++ :image-path PATH
+
+  PATH为一个URI(目前只支持"file"类型)或"$XDG_DATA_DIRS/icon"目录下的某个icon theme的名称
+
++ :sound-file FILENAME
+
+  弹出通知时,播放声音文件
+
++ :sound-name NAME
+
+  "$XDG_DATA_DIRS/sound"目录下定义的sound theme
+
++ :suppress-sound
+
+  若设置了,则不播放任何声音.
+
++ :resident
+
+  若设置了该参数,则即使对该通知做了动作,该通知也不会自动关闭,除非明确的对该通知发出关闭操作
+
++ :transient
+
+  若设置了该参数,则server会认为该通知是暂时的,而忽略server的持久化能力(?When set the server will treat the notification as transient and by-pass the server's persistence capability, if it should exist?)
+
++ :x POSITION / :y POSITION
+
+  定义通知在屏幕上的显示位置
+
++ :on-action FUNCTION
+
+  当按下了表示action的按钮时,会调用该函数. 该函数接受两个参数:notification id和action key
+
++ :on-close FUNCTION
+
+  当通知因为超时或人为关闭时调用该函数. 该函数接受两个参数:notification id和关闭的REASON.
+
+  函数中的REASON参数可以是:
+
+  - 'expired
+
+     由于超时而关闭
+
+  - 'dismissed
+
+     被人为关闭
+
+  - 'close-notification
+
+     通过调用`notifications-close-notification'函数来关闭
+
+  - 'undefined
+
+    notification server未告知原因
+
+  #+BEGIN_SRC emacs-lisp
+  (defun my-on-action-function (id key)
+  (message "Message %d, key \"%s\" pressed" id key))
+  ;; => my-on-action-function
+
+  (defun my-on-close-function (id reason)
+  (message "Message %d, closed due to \"%s\"" id reason))
+  ;; => my-on-close-function
+
+  (notifications-notify
+  :title "Title"
+  :body "This is <b>important</b>."
+  :actions '("Confirm" "I agree" "Refuse" "I disagree")
+  :on-action 'my-on-action-function
+  :on-close 'my-on-close-function)
+  ;; => 22
+
+  这时会弹出一个message window. 按下 "I agree"
+  ;; => Message 22, key "Confirm" pressed
+  ;;    Message 22, closed due to "dismissed"
+  #+END_SRC
+
+* 实现
+有了notifications库,实现起来就异常的简单了,基本上只需要调用 =notifications-notify= 这个函数就OK了.
+
+首先是固定的起手式:
+#+BEGIN_SRC emacs-lisp :tangle "~/bin/notify-send.el"
+  #!/bin/sh
+  ":"; exec emacs --quick --script "$0" -- "$@" # -*- mode: emacs-lisp; lexical-binding: t; -*-
+  (pop command-line-args-left)            
+#+END_SRC
+
+使用 =notifications-notify= 前当然是要先加载notifications库了:
+#+BEGIN_SRC emacs-lisp :tangle "~/bin/notify-send.el" 
+  (require 'notifications)
+#+END_SRC
+
+现在开始需要将传递给命令行的参数转换成传递给 =notifications-notify= 函数的参数.
+
+#+BEGIN_SRC emacs-lisp :tangle "~/bin/notify-send.el"
+  (defvar notify-send-args nil
+    "存放传递给notification-notify函数的参数")
+
+  (defvar notify-send-map '(("-t" . :timeout)
+                            ("-u" . :urgency)
+                            ("-i" . :app-icon))
+    "命令行参数与notifications-notify参数的对应关系")
+
+  ;; 将命令行参数转换成对应的函数参数
+  (catch :DONE
+    (while command-line-args-left
+      (let ((arg (pop command-line-args-left)))
+        (cond ((assoc arg notify-send-map)
+               (let ((arg (cdr (assoc arg notify-send-map)))
+                     (val (pop command-line-args-left)))
+                 (when (eq arg :timeout)
+                   (setq val (string-to-number val)))
+                 (setq notify-send-args `(,arg ,val ,@notify-send-args) )))
+              ((string= arg "--")
+               (let ((title (pop command-line-args-left))
+                     (body (pop command-line-args-left)))
+                 (setq notify-send-args `(:title ,title :body ,body ,@notify-send-args))
+                 (throw :DONE :DONE)))
+              (t
+               (let ((title arg)
+                     (body (pop command-line-args-left)))
+                 (setq notify-send-args `(:title ,title :body ,body ,@notify-send-args))
+                 (throw :DONE :DONE)))))))
+
+  ;; 调用notifications-notify发送消息
+  (apply #'notifications-notify notify-send-args)
+#+END_SRC
+
+最后将 =command-line-args-left= 清空,防止报错.
+#+BEGIN_SRC emacs-lisp  :tangle "~/bin/notify-send.el"
+  (setq command-line-args-left nil)
+#+END_SRC
