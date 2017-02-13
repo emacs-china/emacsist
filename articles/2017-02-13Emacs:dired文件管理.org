@@ -1,6 +1,6 @@
-#+TITLE: Emacs 26的多线程探索
+#+TITLE: Emacs:dired 文件管理
 #+AUTHOR: aborn
-#+DATE: 2017-02-05
+#+DATE: 2017-02-13
 #+EMAIL: aborn.jiang@gmail.com
 #+LANGUAGE: zh
 #+LATEX_HEADER: \usepackage{xeCJK}
