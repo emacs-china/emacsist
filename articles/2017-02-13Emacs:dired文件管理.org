@@ -63,4 +63,4 @@
 *** diredful
     [[https://github.com/thamer/diredful][diredful]] 可使得不同的文件显示不同的颜色,是一个非常好的扩展
 *** dired-icon
-    [[https://gitlab.com/xuhdev/dired-icon][dired-icon]] 显示不同类型图标的icon
+    [[https://gitlab.com/xuhdev/dired-icon][dired-icon]] 根据文件类型显示相应icon
