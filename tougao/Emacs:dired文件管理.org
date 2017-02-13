@@ -1,0 +1,66 @@
+#+TITLE: Emacs 26的多线程探索
+#+AUTHOR: aborn
+#+DATE: 2017-02-05
+#+EMAIL: aborn.jiang@gmail.com
+#+LANGUAGE: zh
+#+LATEX_HEADER: \usepackage{xeCJK}
+#+LATEX_HEADER: \setCJKmainfont{Microsoft YaHei}
+#+OPTIONS: toc:nil
+
+#+SETUPFILE: ~/github/org-html-themes/setup/theme-readtheorg.setup
+
+-----
+
+* dired文件管理
+  dired的全称为Directory Edit，即目录编辑，是一个非常老的模式。是Emacs下的一个文件管理神器!
+  进入当前文件的dired文件管理，*M-x dired* 。
+
+** 常用命令
+*** 光标移动命令
+    + *n* 下移
+    + *p* 上移
+
+*** 文件操作
+    + *C* 拷贝文件，dired-recursive-copies变量决定了拷贝的类型,一般为top
+    + *D* 删除文件，类似的有一个 dired-recursive-deletes 变量可以控制递归删除
+    + *R* 重命名或者移动文件
+    + *D* 删除文件或者目录
+    + *+* 创建目录
+    + *Z* gzip压缩文件
+    + *w* 复制文件名(C-u 则复制相对于dired当前目录的相对目录)
+    + *A* 对文件进行正则表达式搜索，会在第一个匹配的地方停下，然后使用M-, 搜索下一个匹配。
+
+*** 其他命令
+    + *RET* 打开文件或者目录
+    + *g*   刷新当前dired buffer
+    + *k*   隐藏不想显示出来的文件
+    + *q*   退出
+
+** 标记与操作
+   dired可以对多个文件进行标记，然后进行批量操作。一个典型的是采用 *d* 对当前文件打上删除标记，
+   然后使用 *x* 命令来删除所有标记的文件.
+
+*** 标记操作命令
+    + m 以星标记当前文件
+    + * * 标记所有可执行文件
+    + * @ 标记所有符号链接
+    + * / 标记所有目录(不包括 . 和 .. )
+    + * s 标记所有文件(不包括 . 和 .. )
+    + * . 标记具有给定扩展名的文件
+    + % m REGEXP <RET> 或 * % REGEXP <RET> 标记所有匹配到给定的正则表达式 的文件。
+    + % g REGEXP <RET> 标记所有文件 内容 匹配到给定的正则表达式的文件。
+
+*** 其他标记相关命令
+    + u 去除当前行的标记
+    + U 去除所有标记
+
+** 批量执行Shell命令
+   在dired模式下，可以对标记的文件批量执行shell命令（如果没有标记文件，则对当前文件执行shell），
+   运行命令 *dired-do-shell-command* (绑定的快捷键为 *!* )，相应的它有一个对应的异步操作
+   的命令 *dired-do-async-shell-command* (绑定的快捷键为 *&* )。
+
+** dired的扩展
+*** diredful
+    [[https://github.com/thamer/diredful][diredful]] 可使得不同的文件显示不同的颜色,是一个非常好的扩展
+*** dired-icon
+    [[https://gitlab.com/xuhdev/dired-icon][dired-icon]] 显示不同类型图标的icon
