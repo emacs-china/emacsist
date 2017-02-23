@@ -1,0 +1,163 @@
+平时使用org-mode的时候有截图需求，之前在网上copy了一个函数。
+#+BEGIN_SRC elisp
+  ;; 在org-mode中方便地截图并显示
+  (defun peng-org-screenshot ()
+    "Take a screenshot into a unique-named file in the current buffer file
+      directory and insert a link to this file."
+    (interactive)
+    (setq filename
+          (concat (make-temp-name "./") ".png"))
+    (setq fullfilename
+          (concat (file-name-directory (buffer-file-name)) "img/" filename))
+    (if (file-accessible-directory-p (concat (file-name-directory
+                                              (buffer-file-name)) "img/"))
+        nil
+      (make-directory "img/" t))
+    (call-process-shell-command "screencapture" nil nil nil nil "-i" (concat
+                                                                      "\"" fullfilename "\"" ))
+    (insert (concat "[[./img/" filename "]]"))
+    (org-display-inline-images)
+    )
+#+END_SRC
+
+它可以实现 使用 =screencapture= 来抓图，以一个临时生成的名字来做为抓取
+图片的文件 名，最后把图片文件存到当前目录中的 =img= 目录中。然后通过
+=insert= 函 数把链接插入到org文件中。但是这个函数有几个方面还达不到我
+的要求：
+
+1. 删除麻烦。每次想删先得手动到 =img= 目录中把对应文件删除，然后再到
+   org中删链接。
+2. 如果一次抓图失误，重新抓图又要重新生成一个新的文件，之前的文件就成
+   了垃圾放到了 =img= 目录中。删除又得重复一次1的动作。
+3. 图片名字全是临时文件的名字，完全没有自解释性。
+
+为了解决上述几个问题，自己动手搞了一下。首先图片名字不能再上临时的了，
+每次抓图时需要手动输入。我结合ivy-read，把当前目录中的 =img= 目录中的
+图片做为候选，这样可以方便地更新某次错误抓图，而且新建图片也很方便。
+于是把函数改成这样：
+#+BEGIN_SRC elisp
+  (defcustom peng-org-screenshot-dir-name  "img"
+    "default image directory name for org screenshot"
+    :type 'string
+    )
+  (defun peng-org-screenshot ()
+    (interactive)
+    "Take a screenshot into a user specified file in the current
+       buffer file directory and insert a link to this file."
+    (let* ((img-dir peng-org-screenshot-dir-name))
+      (progn
+        (if (file-exists-p img-dir)
+            (print "yes")
+          (mkdir img-dir))
+        (let ((temp-name (ivy-read "please selete a image name"
+                                   (delete ".." (delete "." (directory-files img-dir))))))
+          (setq filename (concat img-dir "/" (file-name-base temp-name) ".png"))
+          (call-process-shell-command "screencapture" nil nil nil nil "-i" (concat
+                                                                            "\"" filename "\"" ))
+          (insert (concat "[[./" filename "]]"))))))
+#+END_SRC
+
+这样搞定了创造截图。重点是删除了。删除需要考虑两方面，一个是删除存在于
+=img= 目录的图片文件，一个是存在于org文件中的图片链接。删除文件其实很
+简单。直接使用 =ivy-read= 读出 =img= 目录中的所有图片文件，然后调用
+=delete-file= 函数删除就好了。
+
+删除org文件中的图片链接就有点麻烦了。我是这样想的：
+
+1. 首先我需要先找到org文件中的所有 =link= 。
+2. 过滤出我想删除的图片的链接。
+3. 干掉它。
+
+关于第一点我找到这样一段elisp代码：
+#+BEGIN_SRC elisp
+  (org-element-map (org-element-parse-buffer) 'link
+                     (lambda (link)
+                       (when (string= (org-element-property :type link) "file")
+                         (list (org-element-property :path link)
+                               (org-element-property :begin link)
+                               (org-element-property :end link)))))
+#+END_SRC
+这段代码可以找到本文件按照刚才的方式插入的图片链接。返回的一个类似于这
+样的列表：
+#+BEGIN_EXAMPLE
+  (("./img/test.png" 363 373))
+#+END_EXAMPLE
+可以看到，这是一个大列表A，大列表中的每个元素B由三个元素组成，它们分别
+的含义是：图片文件的地址、链接在文件中的的起始位置、结束位置。有了这些
+数据，就可以直接通过 =goto-char= 到链接开始，然后使用 =delete-char= 把
+链接干掉。
+
+全部的代码如下：
+#+BEGIN_SRC elisp
+  (defcustom peng-org-screenshot-dir-name  "img"
+    "default image directory name for org screenshot"
+    :type 'string
+    )
+
+  (defun peng-org-screenshot ()
+    (interactive)
+    "Take a screenshot into a user specified file in the current
+       buffer file directory and insert a link to this file."
+    (let* ((img-dir peng-org-screenshot-dir-name))
+      (progn
+        (if (file-exists-p img-dir)
+            (print "yes")
+          (mkdir img-dir))
+        (let ((temp-name (ivy-read "please selete a image name"
+                                   (delete ".." (delete "." (directory-files img-dir))))))
+          (setq filename (concat img-dir "/" (file-name-base temp-name) ".png"))
+          (call-process-shell-command "screencapture" nil nil nil nil "-i" (concat
+                                                                            "\"" filename "\"" ))
+          (insert (concat "[[./" filename "]]"))))))
+
+  (defun peng-find-org-link-begin-and-end (plist string)
+    "find link from plist whose link is equal to string, return a
+  list just like `((name begin-position end-position))'"
+    (let ((return-list '()))
+      (progn
+        (while plist
+          (progn
+            (if (string-equal (car (car plist))
+                              string)
+                (add-to-list 'return-list (cdr (car plist))))
+            (setq plist (cdr plist))))
+        return-list)))
+
+  (defun peng-do-delete-link-function (be-list)
+    "goto the begining of link and delete it, be-list is a list
+  just like `((name begin-position end-position))'"
+    (while be-list
+      (progn
+        (goto-char (car (car be-list)))
+        (delete-char (- (car (cdr (car be-list)))
+                        (car (car be-list))))
+        (setq be-list (cdr be-list)))))
+
+  (defun peng-delete-org-screenshot-image-file-and-link ()
+    (interactive)
+    (let* ((link-list (org-element-map (org-element-parse-buffer) 'link
+                        (lambda (link)
+                          (when (string= (org-element-property :type link) "file")
+                            (list (org-element-property :path link)
+                                  (org-element-property :begin link)
+                                  (org-element-property :end link))))))
+           (img-dir peng-org-screenshot-dir-name)
+           (temp-name (concat "./" img-dir "/"
+                                   (ivy-read "please selete a image name you want to delete"
+                                             (delete ".." (delete "." (directory-files img-dir))))))
+           (begin-end-list (peng-find-org-link-begin-and-end link-list temp-name)))
+      (progn
+        (if (yes-or-no-p "Do you really want to delete the image file? This can't be revert!!")
+            (delete-file temp-name))
+        (if (yes-or-no-p "Do you also want to delete the image links?")
+            (peng-do-delete-link-function begin-end-list)))))
+#+END_SRC
+
+使用 =peng-org-screenshot= 函数来截图，需要输入截图名字，如果需要更新
+原有图片，直接在 =ivy-read= 中过滤出原来的文件，选中即可。如果需要新建，
+输入其名字就是啦。
+
+使用 =peng-delete-org-screenshot-image-file-and-link= 函数来删除文件或
+link。选中想删除的文件，然后回答yes或者no就是了。
+
+函数写得很dirty，但是至少现在它是可以工作了。

@@ -1,0 +1,155 @@
+实际编程时，不仅需要写代码，还需要快速地查找代码，定位日志等。这些事情
+在命令行下可以使用find和grep等工具的编合来完成。很多IDE也都集成了这些
+功能。平时主要还是使用Emacs，还是希望在Emacs中实现这些功能。平时以下功
+能对我很重要：
+
+1. 根据文件名查找文件。
+2. 根据字符串搜索代码。
+3. 快速、快速、快速。
+
+之前我主要使用 =helm-ls-git-ls= 和 =helm-grep-do-git-grep= 来实现。但
+是发现一般只要Emacs工作一天，打开的文件很多。到下午的时候，helm就会变
+得很卡。于是想使用ivy试试。
+
+也是两个函数：
++ counsel-git：在一个git项目中find-file。
++ counsel-git-grep：在一个git项目中grep。
+
+我希望的是，到一个我常用的项目目录里执行这两个函数。最初的想法是直接
+=find-file= 到对应目录。然后调函数就可以了。如：
+#+BEGIN_SRC elisp
+  (defun test ()
+    (interactive)
+    (find-file "projectdir")
+    (counsel-git))
+#+END_SRC
+
+但是有一个很麻烦的事情：如果我在执行两个函数的时候后悔了，不想找了。按
+下 =C-g= 不会回到我原来的buffer，而是停留在我打开的 =projectdir= 。所以
+我的需求是如果按下 =C-g= ，取消的同时还要把 =projectdir= 这个buffer干
+掉。
+
+----------------------------------------------------------------------
+
+最后发现， =ivy-read= 函数本来就有一个 =unwind= 选项，可以在 =C-g=后也
+执行对应的函数。所以直接把 =counsel-git= 和 =counsel-git-grep=函数拿来
+改一下就可以了（需要注意的是：peng-root-dir不能以 =/= 结束，因为我需
+要使用 =file-name-base= 来找到打开project后的buffer-name）：
+#+BEGIN_SRC elisp
+  (defcustom peng-root-dir "~/src/project"
+    "the root directorie of your project"
+    :type 'string
+    )
+  (defun peng-asp-engine-project-and-ivy-ls ()
+    "Find file in the current Git repository."
+    (interactive)
+    (find-file peng-root-dir)
+    (setq peng-temp-buffer-name (file-name-base peng-root-dir))
+    (setq counsel--git-dir (locate-dominating-file
+                            default-directory ".git"))
+    (ivy-set-prompt 'counsel-git counsel-prompt-function)
+    (if (null counsel--git-dir)
+        (error "Not in a git repository")
+      (setq counsel--git-dir (expand-file-name
+                              counsel--git-dir))
+      (let* ((default-directory counsel--git-dir)
+             (cands (split-string
+                     (shell-command-to-string counsel-git-cmd)
+                     "\n"
+                     t)))
+        (ivy-read "Find file" cands
+                  :action #'counsel-git-action
+                  :caller 'counsel-git
+                  :unwind #'(lambda ()
+                              (kill-buffer peng-temp-buffer-name))))))
+
+  (defun peng-asp-engine-project-and-ivy-grep (&optional cmd initial-input)
+    "Grep for a string in the current git repository.
+  When CMD is a string, use it as a \"git grep\" command.
+  When CMD is non-nil, prompt for a specific \"git grep\" command.
+  INITIAL-INPUT can be given as the initial minibuffer input."
+    (interactive "P")
+    (find-file peng-root-dir)
+    (setq peng-temp-buffer-name (file-name-base peng-root-dir))
+    (ivy-set-prompt 'counsel-git-grep counsel-prompt-function)
+    (let ((dd (expand-file-name default-directory))
+          proj)
+      (cond
+        ((stringp cmd)
+         (setq counsel-git-grep-cmd cmd))
+        (cmd
+         (if (setq proj
+                   (cl-find-if
+                    (lambda (x)
+                      (string-match (car x) dd))
+                    counsel-git-grep-projects-alist))
+             (setq counsel-git-grep-cmd (cdr proj))
+           (setq counsel-git-grep-cmd
+                 (ivy-read "cmd: " counsel-git-grep-cmd-history
+                           :history 'counsel-git-grep-cmd-history
+                           :re-builder #'ivy--regex
+                           :unwind #'(lambda ()
+                                       (kill-buffer peng-temp-buffer-name))))
+           (setq counsel-git-grep-cmd-history
+                 (delete-dups counsel-git-grep-cmd-history))))
+        (t
+         (setq counsel-git-grep-cmd counsel-git-grep-cmd-default)))
+      (setq counsel--git-grep-dir
+            (if proj
+                (car proj)
+              (locate-dominating-file default-directory ".git")))
+      (if (null counsel--git-grep-dir)
+          (error "Not in a git repository")
+        (unless proj
+          (setq counsel--git-grep-count
+                (if (eq system-type 'windows-nt)
+                    0
+                  (counsel--gg-count "" t))))
+        (ivy-read "git grep" (if proj
+                                 'counsel-git-grep-proj-function
+                               'counsel-git-grep-function)
+                  :initial-input initial-input
+                  :matcher #'counsel-git-grep-matcher
+                  :dynamic-collection (or proj (> counsel--git-grep-count 20000))
+                  :keymap counsel-git-grep-map
+                  :action #'counsel-git-grep-action
+                  ;; :unwind #'swiper--cleanup
+                  :history 'counsel-git-grep-history
+                  :caller 'counsel-git-grep
+                  :unwind #'(lambda ()
+                              (kill-buffer peng-temp-buffer-name)
+                              (swiper--cleanup))))))
+#+END_SRC
+
+最后再来一个函数，预定几个project后，一调用就可以方便地在几个project中
+切换啦：
+#+BEGIN_SRC elisp
+  (defun peng-set-root-project ()
+    "selete a projec through `ivy-read'"
+    (interactive)
+    (let* ((project-list (ivy-read "Please selete a project: "
+                                   (list
+                                    ;; do not end with slash
+                                    "~/src/xxx"
+                                    "~/src/yyy"
+                                    "~/src/zzz"
+                                    ))))
+      (setq peng-root-dir project-list)))
+#+END_SRC
+  
+最后附加ivy的一些实用的按键绑定介绍，也算是总结（基本就是把翻译了一些
+=ivy-help= 里面的东西）：
+
+~M-i~ (=ivy-insert-current=) ：插入当前选中的目标。
+
+~M-j~ (=ivy-yank-word=) ： 插入当前光标下的word。 
+
+~S-SPC~ (=ivy-restrict-to-matches=) ： 保持当前输入过滤候选项，并清空
+当前输入。这个功能很实用。一般找文件，如果有重名，选输入文件名后，按下
+=S-SPC= 后简单再过滤一下目录就出来了。
+
+~C-c C-o~ (=ivy-occur=) ：把当前候选项保存到一个buffer中。然后你可以慢
+慢查找你想要的，最后回车即可。
+
+~C-o~ (=hydra-ivy/body=) ：可以调出一个辅助小窗口，基本都有提示，kj上
+下移动等等。
