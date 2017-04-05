@@ -31,6 +31,7 @@
    目录下的文章，执行 *M-x emacsist-publish* 可以将该文章发布到 article/ 下（如果当前文章已经收录到Emacs公众号）。
 
 ** 往期文章
+   + [[./articles/2017-04-05创建Emacs版的notify-sender.org][2017-04-05创建Emacs版的notify-sender]]
    + [[./articles/2017-03-06使用Emacs发送电子邮件.org][2017-03-06使用Emacs发送电子邮件]]
    + [[./articles/2017-02-20Emacs文件管理神器--dired常用操作说明.org][2017-02-20Emacs文件管理神器--dired常用操作说明]]
    + [[./articles/2017-02-13Emacs:dired文件管理.org][2017-02-13Emacs:dired文件管理]]
