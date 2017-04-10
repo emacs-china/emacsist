@@ -1,3 +1,10 @@
+#+TITLE: Emacs是如何实现快速查找和定位代码的?.org
+#+AUTHOR: 谢鹏
+#+TAGS: latex,make
+#+DATE: [2017-04-10]
+#+LANGUAGE:  zh-CN
+#+OPTIONS:  H:6 num:nil toc:t \n:nil ::t |:t ^:nil -:nil f:t *:t <:nil
+
 实际编程时，不仅需要写代码，还需要快速地查找代码，定位日志等。这些事情在命令行下可以使用 find 和 grep 等工具的编合来完成。很多 IDE 也都集成了这些功能。平时主要还是使用 Emacs，还是希望在 Emacs 中实现这些功能。平时以下功能对我很重要：
 
 1. 根据文件名查找文件。
