@@ -1,0 +1,43 @@
+#+TITLE: 使用magit快速commit和push
+#+AUTHOR: aborn
+#+DATE: 2017-06-03
+
+-----
+
+magit在emacs是一大神器，当我们编辑当前文件，并且想对当前文件提交commit并push，如何做？
+很简单：使用下面的aborn/simple-git-commit-push命令就能达到效果！
+
+#+BEGIN_SRC emacs-lisp
+(defun aborn/simple-git-commit-push (msg)
+  "Simple commit current git project and push to its upstream."
+  (interactive "sCommit Message: ")
+  (when (= 0 (length msg))
+    (setq msg (format-time-string "commit by magit in emacs@%Y-%m-%d %H:%M:%S"
+                                  (current-time))))
+  (message "commit message is %s" msg)
+  (when (and buffer-file-name
+             (buffer-modified-p))
+    (save-buffer))                   ;; save it first if modified.
+  (magit-stage-modified)
+  (magit-commit (list "-m" msg))
+  (magit-push-current-to-upstream nil))
+#+END_SRC
+
+
+将上面的elisp代码放到你的init.el文件里，当想commit时，执行:
+
+#+BEGIN_SRC emacs-command
+M-x aborn/simple-git-commit-push
+#+END_SRC
+
+然后跳出一个交互输入：
+
+[[./images/magit_input.png]]
+
+当输入完commit信息后，回车！然后就会做commit和push。相当于执行了命令行下的以下两个命令：
+注意：你可以不填写commit信息，这时会自动生成一个commit信息!
+
+#+BEGIN_SRC shell
+git commit -am "your message"
+git push
+#+END_SRC
