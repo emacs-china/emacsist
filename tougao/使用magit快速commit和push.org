@@ -42,4 +42,7 @@ git commit -am "your message"
 git push
 #+END_SRC
 
-注意：你可以不填写commit信息，这时会自动生成一个commit信息!
+注意：
+
+1. 你可以不填写commit信息，这时会自动生成一个commit信息!
+2. 异步执行的日志信息在*magit-process: xxx *的一个buffer里。
