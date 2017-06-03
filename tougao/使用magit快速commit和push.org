@@ -4,7 +4,7 @@
 
 -----
 
-magit在emacs是一大神器，当我们编辑当前文件，并且想对当前文件提交commit并push，如何做？
+[[https://github.com/magit/magit][magit]] 在emacs是一大神器，当我们编辑当前文件，并且想对当前文件提交commit并push，如何做？
 很简单：使用下面的aborn/simple-git-commit-push命令就能达到效果！
 
 #+BEGIN_SRC emacs-lisp
